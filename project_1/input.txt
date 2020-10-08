@@ -1,0 +1,18 @@
+#lines with # at the beginning are ignored.
+#This file will initialize names, balances, and account types
+#idea for the future => add password feature?
+#format => name type balance
+#if second string grabbed is not Checking or Savings
+#it is assumed to be a multi-word name
+John Connor                           Checking   100.00
+Elliot                               Savings     1000000000.00
+Bernard Huxley                        Checking   19.84
+#testing if comment ignoring is consistent
+Prince                                Savings     1999.99
+Richard Stallman                      Savings     888.83
+Linus Torvalds                        Checking   888.82
+Moana                                 Savings     70000.33
+Archimedes                            Savings     37236.22
+Sun Tzu                               Checking   344.10
+Bertrand Russell Clinton the Third    Savings     999999999999999.98
+#another comment 
