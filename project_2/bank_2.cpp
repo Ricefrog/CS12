@@ -5,8 +5,21 @@
 #include <fstream>
 
 #define inputPrompt() std::cout << "[" << currentUser << "@nessus]$ "
+
+#define EXEC(type, ptr, member) if (!type)\
+					(static_cast<checkingAccount*>(ptr))->member;\
+				else \
+					(static_cast<savingsAccount*>(ptr))->member;
+
+#define ASSIGN(lVal, type, ptr, member) if (!type)\
+					lVal = (static_cast<checkingAccount*>(ptr))->member;\
+				else \
+					lVal = (static_cast<savingsAccount*>(ptr))->member;
+
 checkingAccount *newCAccount(); 
+savingsAccount *newSAccount();
 void startupPrompt();
+void mainPrompt();
 int userQuit();
 
 //will modify minimum balance, service charges, and interest rate
@@ -48,10 +61,12 @@ void signFix(type &num) {
 
 //This string is used in all the prompts
 std::string currentUser = "user";
+int *totalAccounts = &bankAccount::totalAccounts;
+//0 for checking account, 1 for savings account
+bool type = 0;
 
 int main(void) {
 	char c;
-	int *totalAccounts = &bankAccount::totalAccounts;
 
 	checkingAccount *firstC = nullptr;
 	checkingAccount *cTemp = nullptr;
@@ -65,6 +80,7 @@ int main(void) {
 	std::string checkEnd;
 	infile.open("input.txt");
 
+	//load account from file.
 	while (infile >> checkEnd) {
 
 		if (!checkEnd.compare("endfile"))
@@ -123,11 +139,11 @@ int main(void) {
 				while (q->next != nullptr)
 					q = q->next;
 				q->next = sTemp;
-			q->info();
 			}
 			
 		}
 	}
+	infile.close();
 
 	p = firstC;
 	while (p->next != nullptr)
@@ -138,15 +154,14 @@ int main(void) {
 		q = q->next;
 	//p and q now point to the last account in the lists
 
-	printAll(firstC);
-	printAll(firstS);
+	//printAll(firstC);
+	//printAll(firstS);
 		
 	//All accounts have been loaded from the file.
-	//0 for checking account, 1 for savings account
-	bool type = 0;
-	checkingAccount *userAccount;
-	//savingsAccount *userAccount;
+	checkingAccount *userCAccount;
+	savingsAccount *userSAccount;
 	std::string searchName, password;
+
 	START:
 	startupPrompt();
 	std::cin >> c;
@@ -160,19 +175,37 @@ int main(void) {
 		inputPrompt();
 		std::cin >> type;
 		if (!type) {
-			std::cout << "\nEnter your account name: ";
+			std::cout << "\nChecking Account Log In:" << std::endl;
+			std::cout << "Enter your account name: ";
 			std::cin.clear();
 			std::cin.ignore(100, '\n');
 			std::getline(std::cin, searchName);
 			std::cout << "Enter your password: ";
 			std::cin >> password;
-			p->next = userAccount = findAccount(firstC, searchName, 0);
-			if (userAccount == nullptr) {
+			p->next = findAccount(firstC, searchName, 0);
+			if (p->next == nullptr) {
 				std::cout << "\nWe do not have records of such an account.\n"
 					<< std::endl;
 				goto START;
 			}
+			userCAccount = p->next;
+		} else {
+			std::cout << "\nSavings Account Log In:" << std::endl;
+			std::cout << "Enter your account name: ";
+			std::cin.clear();
+			std::cin.ignore(100, '\n');
+			std::getline(std::cin, searchName);
+			std::cout << "Enter your password: ";
+			std::cin >> password;
+			q->next = findAccount(firstS, searchName, 0);
+			if (q->next == nullptr) {
+				std::cout << "\nWe do not have records of such an account.\n"
+					<< std::endl;
+				goto START;
+			}
+			userSAccount = q->next;
 		}
+		std::cout << "Successfully logged in!\n" << std::endl;
 		break;
 	case 's':
 		std::cout << "\nSIGN UP:" << std::endl;
@@ -183,16 +216,42 @@ int main(void) {
 		inputPrompt();
 		std::cin >> type;
 		if (!type)
-			p->next = userAccount = newCAccount();
+			userCAccount = p->next = newCAccount();
+		else 
+			userSAccount = q->next = newSAccount();
+		printf("\n");
 		break;
 	default:
 		return userQuit();
 	}
 	//At this point one of the account ponters should hold the 
-	//current user's account.
-
-	userAccount->info();
-	return 0;
+	//current user's account and type should reflect the type 
+	//of account that the user created or logged in to.
+	void *userAccount;
+	if (!type)
+		userAccount = userCAccount;
+	else 
+		userAccount = userSAccount;
+	
+	//EXEC(type, userAccount, info());
+	ASSIGN(currentUser, type, userAccount, getAccountName());
+	std::cin.clear();
+	std::cin.ignore(255, '\n');
+	while (1) {
+		mainPrompt();
+		std::cin >> c;
+		switch (c) {
+		case 'v':
+			std::cout << "\n***************************************";
+			EXEC(type, userAccount, info());
+			std::cout << "***************************************\n" << std::endl;
+			break;
+		case 'q':
+			return userQuit();
+		default:
+			std::cout << "Invalid option." << std::endl;
+		}
+	}
 }
 
 checkingAccount *newCAccount() {
@@ -215,6 +274,7 @@ checkingAccount *newCAccount() {
 	std::cout << "|Interest Rate:   0.01%|Interest Rate:    5.00% |Interest Rate:     15.00%|\n" << std::endl; 
 	inputPrompt();
 	std::cin >> c;
+
 	switch (c) {
 	case 'b':
 		plan = "Basic";
@@ -228,6 +288,7 @@ checkingAccount *newCAccount() {
 	default:
 		plan = "Basic";
 	}
+
 	std::cout << "\nYou chose the " << plan << " plan." << std::endl;
 	std::cout << "Initial deposit: $";
 	std::cin >> initBalance;
@@ -237,11 +298,63 @@ checkingAccount *newCAccount() {
 	return cTemp;
 }
 
+savingsAccount *newSAccount() {
+	savingsAccount *sTemp = nullptr;
+	std::string plan;
+	char c;
+	double initBalance;
+	double rate;
+
+	std::cout << "\n...creating a new savings account\n" << std::endl;
+	std::cout << "Under what name will you be creating this account?" << std::endl;
+	inputPrompt();
+	std::cin >> currentUser;
+	std::cout << "\nThe Bank of Nessus has two checking account plans:\n" << std::endl;
+	std::cout << "|Turtle (press t)     |Fox (press f)        |" << std::endl;
+	std::cout << "|Interest Rate: 0.50% |Interest Rate: 5.00% |\n" << std::endl; 
+	inputPrompt();
+	std::cin >> c;
+
+	switch (c) {
+	case 't':
+		plan = "Turtle";
+		break;
+	case 'f':
+		plan = "Fox";
+		break;
+	default:
+		plan = "Turtle";
+	}
+
+	std::cout << "\nYou chose the " << plan << " plan." << std::endl;
+	std::cout << "Initial deposit: $";
+	std::cin >> initBalance;
+	signFix(initBalance);
+	savingsPlan(plan, rate);			
+	sTemp = new savingsAccount(currentUser, initBalance,rate);
+	return sTemp;
+}
+
 void startupPrompt() {
 	std::cout << "***************************************" << std::endl;
 	std::cout << "* >> Welcome to the Bank of Nessus << *" << std::endl;
 	std::cout << "***************************************" << std::endl;
+	std::cout << "        Now serving " << *totalAccounts << " accounts!" << std::endl;
 	std::cout << "- log in (press l)" << "\n- sign up (press s)" << std::endl;
+	std::cout << "- quit (press q)" << std::endl;
+	inputPrompt();
+}
+
+void mainPrompt() {
+	std::cout << "***************************************" << std::endl;
+	std::cout << "* >> Welcome to the Bank of Nessus << *" << std::endl;
+	std::cout << "***************************************" << std::endl;
+	std::cout << "        Now serving " << *totalAccounts << " accounts!" << std::endl;
+	std::cout << "- view account (press v)" << std::endl;
+	std::cout << "- deposit (press d)" << std::endl;
+	std::cout << "- withdraw (press w)" << std::endl;
+	if (!type)
+		std::cout << "- write check (press c)" << std::endl;
 	std::cout << "- quit (press q)" << std::endl;
 	inputPrompt();
 }
