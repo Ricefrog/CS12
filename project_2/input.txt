@@ -1,0 +1,14 @@
+# name accountType initialBalance
+# if checking account the next entry is the account plan
+#the account plan simplifies the minimum balance, service charges, and interest rate into one keyword
+John Connor                           Checking    100.00 			Basic
+Elliot                                Savings     1000000000.00
+Bernard Huxley                        Checking    19.84 			Exultant
+Prince                                Savings     1999.99
+Richard Stallman                      Savings     888.83
+Linus Torvalds                        Checking    888.82			Aggressive
+Moana                                 Savings     70000.33
+Archimedes                            Savings     37236.22
+Sun Tzu                               Checking    344.10			Basic
+Bertrand Russell Clinton the Third    Savings     999999999999999.98
+endfile

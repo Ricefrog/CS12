@@ -10,7 +10,10 @@ int main() {
 	char s[] = "V";
 	romanType athens(s);
 	newNumerals(athens, s);
-	while(prompt(athens, s)!=0);
+	while(1) {
+		if (!prompt(athens, s))
+			break;
+	}
 
 	return 0;
 }
