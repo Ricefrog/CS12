@@ -1,9 +1,9 @@
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include "bankAccount.h"
 #include "checkingAccount.h"
 #include "savingsAccount.h"
-#include <fstream>
 
 #define inputPrompt() std::cout << "[" << currentUser << "@nessus]$ "
 
@@ -21,8 +21,8 @@ checkingAccount *newCAccount();
 savingsAccount *newSAccount();
 void startupPrompt();
 void mainPrompt();
-int userQuit();
-void saveData();
+int userQuit(checkingAccount*, savingsAccount*);
+void saveData(checkingAccount*, savingsAccount*);
 
 //will modify minimum balance, service charges, and interest rate
 //based on the plan specified in the string variable
@@ -231,7 +231,7 @@ int main(void) {
 		printf("\n");
 		break;
 	default:
-		return userQuit();
+		return userQuit(firstC, firstS);
 	}
 	//At this point one of the account ponters should hold the 
 	//current user's account and type should reflect the type 
@@ -318,7 +318,7 @@ int main(void) {
 			std::cout << "\n***************************************\n" << std::endl;
 			break;
 		case 'q':
-			return userQuit();
+			return userQuit(firstC, firstS);
 		default:
 			std::cout << "Invalid option." << std::endl;
 		}
@@ -328,6 +328,7 @@ int main(void) {
 checkingAccount *newCAccount() {
 	checkingAccount *cTemp = nullptr;
 	std::string plan;
+	std::string pass;
 	char c;
 	double initBalance;
 	double minBal;
@@ -338,6 +339,9 @@ checkingAccount *newCAccount() {
 	std::cout << "Under what name will you be creating this account?" << std::endl;
 	inputPrompt();
 	std::cin >> currentUser;
+	std::cout << "Enter a password for your account: " << std::endl;
+	inputPrompt();
+	std::cin >> pass;
 	std::cout << "\nThe Bank of Nessus has three checking account plans:\n" << std::endl;
 	std::cout << "|Basic (press b)       |Aggressive (press a)    |Exultant (press e)       |" << std::endl;
 	std::cout << "|Minimum Balance: $0.00|Minimum Balance: $500.00|Minimum Balance: $8900.00|" << std::endl; 
@@ -365,13 +369,14 @@ checkingAccount *newCAccount() {
 	std::cin >> initBalance;
 	signFix(initBalance);
 	checkingPlan(plan, minBal, sCharges, rate);			
-	cTemp = new checkingAccount(currentUser, initBalance, minBal, sCharges, rate);
+	cTemp = new checkingAccount(currentUser, initBalance, minBal, sCharges, rate, pass);
 	return cTemp;
 }
 
 savingsAccount *newSAccount() {
 	savingsAccount *sTemp = nullptr;
 	std::string plan;
+	std::string pass;
 	char c;
 	double initBalance;
 	double rate;
@@ -380,6 +385,9 @@ savingsAccount *newSAccount() {
 	std::cout << "Under what name will you be creating this account?" << std::endl;
 	inputPrompt();
 	std::cin >> currentUser;
+	std::cout << "Enter a password for your account: " << std::endl;
+	inputPrompt();
+	std::cin >> pass;
 	std::cout << "\nThe Bank of Nessus has two savings account plans:\n" << std::endl;
 	std::cout << "|Turtle (press t)     |Fox (press f)        |" << std::endl;
 	std::cout << "|Interest Rate: 0.50% |Interest Rate: 5.00% |\n" << std::endl; 
@@ -402,7 +410,7 @@ savingsAccount *newSAccount() {
 	std::cin >> initBalance;
 	signFix(initBalance);
 	savingsPlan(plan, rate);			
-	sTemp = new savingsAccount(currentUser, initBalance,rate);
+	sTemp = new savingsAccount(currentUser, initBalance, rate, pass);
 	return sTemp;
 }
 
@@ -431,14 +439,64 @@ void mainPrompt() {
 	inputPrompt();
 }
 
-int userQuit() {
+int userQuit(checkingAccount *firstC, savingsAccount *firstS) {
+	saveData(firstC, firstS);
 	std::cout << "\nThank you for choosing the Bank of Nessus!" << std::endl;
 	return 0;
 }
 
-void saveData() {
+void saveData(checkingAccount *firstC, savingsAccount *firstS) {
+	std::string entry;
+	checkingAccount *p = firstC;
+	savingsAccount *q = firstS;
+
 	std::ofstream outfile;
 	outfile.open("datastore.txt");
+	outfile << std::fixed << std::setprecision(2);
+	outfile << "# name accountType initialBalance plan password\n";
+
+	while (q != nullptr) {
+		entry = "";
+		entry += q->getAccountName();
+		entry += '\t';
+		entry += "Savings";
+		entry += '\t';
+		outfile << entry;
+		outfile << q->getBalance();
+		entry = '\t';
+		if (q->getInterestRate() == 0.05)
+			entry += "Fox";
+		else 
+			entry += "Turtle";
+		entry += '\t';
+		entry += q->getPassword();
+		entry += '\n';
+		outfile << entry;
+		q = q->next;
+	}
+
+	while (p != nullptr) {
+		entry = "";
+		entry += p->getAccountName();
+		entry += '\t';
+		entry += "Checking";
+		entry += '\t';
+		outfile << entry;
+		outfile << p->getBalance();
+		entry = '\t';
+		if (p->getMinimumBalance() == 0.00)
+			entry += "Basic";
+		else if (p->getMinimumBalance() == 500.00)
+			entry += "Aggressive";
+		else 
+			entry += "Exultant";
+		entry += '\t';
+		entry += p->getPassword();
+		entry += '\n';
+		outfile << entry;
+		p = p->next;
+	}
+	outfile << "endfile";
 }
 
 void checkingPlan(std::string plan, double &minBalance, double &serviceCharges, double &rate) {
@@ -465,8 +523,7 @@ void savingsPlan(std::string plan, double &rate) {
 	else std::cout << "Invalid savings plan." << std::endl;
 }
 
-bool allDigits(std::string line)
-{
+bool allDigits(std::string line) {
 	    char* p;
 		    strtol(line.c_str(), &p, 10);
 			    return *p == 0;

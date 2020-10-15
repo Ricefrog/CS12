@@ -1,12 +1,15 @@
 # name accountType initialBalance plan password
-John Connor                           Checking    100.00 			Basic         skyNet 
-Elliot                                Savings     1000000000.00     Fox           robot
-Bernard Huxley                        Checking    19.84 			Exultant      soma
-Prince                                Savings     1999.99           Fox           1999
-Richard Stallman                      Savings     888.83            Turtle        gnu
-Linus Torvalds                        Checking    888.82			Aggressive    /linux 
-Moana                                 Savings     70000.33          Turtle        ocean
-Archimedes                            Savings     37236.22          Turtle        whiteDove
-Sun Tzu                               Checking    344.10			Basic         strategic 
-Bertrand Russell Clinton the Third    Savings     9999999999999.98  Fox           moneyBags
+Elliot	Savings	1000000000.00	Fox	robot
+Prince	Savings	1999.99	Fox	1999
+Richard Stallman	Savings	888.83	Turtle	gnu
+Moana	Savings	70000.33	Turtle	ocean
+Archimedes	Savings	37236.22	Turtle	whiteDove
+Bertrand Russell Clinton the Third	Savings	9999999999999.98	Fox	moneyBags
+goertel	Savings	67.50	Turtle	mathematica
+John Connor	Checking	100.00	Basic	skyNet
+Bernard Huxley	Checking	19.84	Exultant	soma
+Linus Torvalds	Checking	888.82	Aggressive	/linux
+Sun Tzu	Checking	344.10	Basic	strategic
+severian	Checking	59480.00	Exultant	password
+gertrude	Checking	30.66	Aggressive	grenwald
 endfile
