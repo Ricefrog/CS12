@@ -4,7 +4,7 @@
 class savingsAccount : public bankAccount {
 public:
 	//name, initial balance, interest rate
-	savingsAccount(std::string = "Anonymous", double = 0.0, double = 0.0);
+	savingsAccount(std::string = "Anonymous", double = 0.0, double = 0.0, std::string = "password");
 
 	void setInterestRate(double);
 	double getInterestRate() const;
@@ -19,8 +19,8 @@ private:
 	double interestRate;
 };
 
-savingsAccount::savingsAccount(std::string name, double balance, double rate)
-	: bankAccount(name, balance) {
+savingsAccount::savingsAccount(std::string name, double balance, double rate, std::string pass)
+	: bankAccount(name, balance, pass) {
 		interestRate = rate;
 }
 
@@ -34,5 +34,6 @@ double savingsAccount::getInterestRate() const {
 
 void savingsAccount::info() const {
 	bankAccount::info();	
+	std::cout << "Account Type: Savings" << std::endl;
 	printf("Interest Rate: %.2f\%\n", 100 * interestRate);
 }

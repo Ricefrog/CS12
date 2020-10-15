@@ -7,7 +7,7 @@ class bankAccount {
 
 public:
     //constructor, parameter order => name, account type, initial balance
-    bankAccount(std::string = "Anonymous", double = 0.00);
+    bankAccount(std::string = "Anonymous", double = 0.00, std::string = "password");
     //change info after initialization
     void changeInfo(std::string = "none", double = 0.00);
     //deposits money, returns new balance.
@@ -30,8 +30,13 @@ public:
 	std::string getAccountName() const {
 		return accountName;
 	}
+
+	std::string getPassword() const {
+		return password;
+	}
 private:
     std::string accountName;
+	std::string password;
     int accountNumber;
     double accountBalance;
 };
@@ -40,8 +45,9 @@ private:
 int bankAccount::totalAccounts = 0;
 
 //constructor
-bankAccount::bankAccount(std::string name, double balance) {
+bankAccount::bankAccount(std::string name, double balance, std::string pass) {
     accountName = name;
+	password = pass;
     accountBalance = balance;
     accountNumber = 13370 + ++totalAccounts;
 }

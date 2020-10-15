@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include "bankAccount.h"
 #include "checkingAccount.h"
 #include "savingsAccount.h"
@@ -21,12 +22,14 @@ savingsAccount *newSAccount();
 void startupPrompt();
 void mainPrompt();
 int userQuit();
+void saveData();
 
 //will modify minimum balance, service charges, and interest rate
 //based on the plan specified in the string variable
 void checkingPlan(std::string, double&, double&, double&);
 //modifies interestRate variable based on the plan specified
 void savingsPlan(std::string, double&);
+bool allDigits(std::string);
 
 //returns account by number or by name
 template <class accType>
@@ -78,7 +81,7 @@ int main(void) {
 
 	std::ifstream infile;
 	std::string checkEnd;
-	infile.open("input.txt");
+	infile.open("datastore.txt");
 
 	//load account from file.
 	while (infile >> checkEnd) {
@@ -92,6 +95,7 @@ int main(void) {
 		std::string accountType;
 		std::string tempStr;
 		std::string plan;
+		std::string pass;
 		double initBalance;
 
 		while ((c = infile.get()) == '#')
@@ -109,13 +113,14 @@ int main(void) {
 		accountType = tempStr;
 		infile >> initBalance;
 		infile >> plan;
+		infile >> pass;
 		if (accountType == "Checking") {
 			double minBal = 0.0;
 			double sCharges = 0.0;
 			double rate = 0.0;
 
 			checkingPlan(plan, minBal, sCharges, rate);			
-			cTemp = new checkingAccount(name, initBalance, minBal, sCharges, rate);
+			cTemp = new checkingAccount(name, initBalance, minBal, sCharges, rate, pass);
 			
 			if (firstC == nullptr) 
 				firstC = cTemp;
@@ -130,7 +135,7 @@ int main(void) {
 			double rate = 0.0;
 
 			savingsPlan(plan, rate);
-			sTemp = new savingsAccount(name, initBalance, rate);
+			sTemp = new savingsAccount(name, initBalance, rate, pass);
 
 			if (firstS == nullptr)
 				firstS = sTemp;
@@ -182,13 +187,15 @@ int main(void) {
 			std::getline(std::cin, searchName);
 			std::cout << "Enter your password: ";
 			std::cin >> password;
-			p->next = findAccount(firstC, searchName, 0);
-			if (p->next == nullptr) {
+			userCAccount = findAccount(firstC, searchName, 0);
+			if (userCAccount == nullptr) {
 				std::cout << "\nWe do not have records of such an account.\n"
 					<< std::endl;
 				goto START;
+			} else if (password.compare(userCAccount->getPassword()) != 0) {
+				std::cout << "\nPassword does not match.\n" << std::endl;
+				goto START;
 			}
-			userCAccount = p->next;
 		} else {
 			std::cout << "\nSavings Account Log In:" << std::endl;
 			std::cout << "Enter your account name: ";
@@ -197,13 +204,15 @@ int main(void) {
 			std::getline(std::cin, searchName);
 			std::cout << "Enter your password: ";
 			std::cin >> password;
-			q->next = findAccount(firstS, searchName, 0);
-			if (q->next == nullptr) {
+			userSAccount = findAccount(firstS, searchName, 0);
+			if (userSAccount == nullptr) {
 				std::cout << "\nWe do not have records of such an account.\n"
 					<< std::endl;
 				goto START;
+			} else if (password.compare(userSAccount->getPassword()) != 0) {
+				std::cout << "\nPassword does not match.\n" << std::endl;
+				goto START;
 			}
-			userSAccount = q->next;
 		}
 		std::cout << "Successfully logged in!\n" << std::endl;
 		break;
@@ -237,7 +246,16 @@ int main(void) {
 	ASSIGN(currentUser, type, userAccount, getAccountName());
 	std::cin.clear();
 	std::cin.ignore(255, '\n');
+	std::cout << std::fixed << std::setprecision(2);
 	while (1) {
+		double amount;
+		double balance;
+		double newBal;
+		std::string search;
+		int num;
+		checkingAccount *found = nullptr;
+		ASSIGN(balance, type, userAccount, getBalance());
+
 		mainPrompt();
 		std::cin >> c;
 		switch (c) {
@@ -245,6 +263,59 @@ int main(void) {
 			std::cout << "\n***************************************";
 			EXEC(type, userAccount, info());
 			std::cout << "***************************************\n" << std::endl;
+			break;
+		case 'd':
+			std::cout << "\n***************************************" << std::endl;
+			std::cout << "Current Balance: $" << balance << std::endl; 
+			std::cout << "How much would you like to deposit?: $";
+			std::cin >> amount;
+			signFix(amount);
+			ASSIGN(newBal, type, userAccount, deposit(amount));
+			std::cout << "Successfully deposited $" << amount << "." << std::endl;
+			std::cout << "***************************************\n" << std::endl;
+			break;
+		case 'w':
+			std::cout << "\n***************************************" << std::endl;
+			std::cout << "Current Balance: $" << balance << std::endl;
+			std::cout << "How much would you like to withdraw?: $";
+			std::cin >> amount;
+			signFix(amount);
+			ASSIGN(newBal, type, userAccount, withdraw(amount));
+			if (newBal >= 0)
+				std::cout << "Successfully withdrew $" << amount << "." << std::endl;
+			std::cout << "***************************************\n" << std::endl;
+			break;
+		case 'c':
+			if (type) break;
+
+			std::cout << "\n***************************************" << std::endl;
+			std::cout << "Enter the account number or the name of the account holder: ";
+			std::cin.clear();
+			std::cin.ignore(100, '\n');
+			std::getline(std::cin, search);
+			if (allDigits(search)) {
+				num = stoi(search);
+				found = findAccount(firstC, "byNumber", num);
+			} else 
+				found = findAccount(firstC, search, 0);
+			if (found == nullptr) {
+				std::cout << "That account could not be found." << std::endl;
+				std::cout << "***************************************\n" << std::endl;
+				break;
+			}
+			std::cout << "Current Balance: $" << balance << std::endl;
+			std::cout << "Enter the amount you would like to send to " << found->getAccountName()
+				<< ": $";
+			std::cin >> amount;
+			signFix(amount);
+			static_cast<checkingAccount*>(userAccount)->writeCheck(found, amount); 
+			std::cout << "***************************************\n" << std::endl;
+			break;
+		case 'a':
+			std::cout << "\n***************************************" << std::endl;
+			printAll(firstS);
+			printAll(firstC);
+			std::cout << "\n***************************************\n" << std::endl;
 			break;
 		case 'q':
 			return userQuit();
@@ -309,7 +380,7 @@ savingsAccount *newSAccount() {
 	std::cout << "Under what name will you be creating this account?" << std::endl;
 	inputPrompt();
 	std::cin >> currentUser;
-	std::cout << "\nThe Bank of Nessus has two checking account plans:\n" << std::endl;
+	std::cout << "\nThe Bank of Nessus has two savings account plans:\n" << std::endl;
 	std::cout << "|Turtle (press t)     |Fox (press f)        |" << std::endl;
 	std::cout << "|Interest Rate: 0.50% |Interest Rate: 5.00% |\n" << std::endl; 
 	inputPrompt();
@@ -355,6 +426,7 @@ void mainPrompt() {
 	std::cout << "- withdraw (press w)" << std::endl;
 	if (!type)
 		std::cout << "- write check (press c)" << std::endl;
+	std::cout << "- view all accounts (press a)" << std::endl;
 	std::cout << "- quit (press q)" << std::endl;
 	inputPrompt();
 }
@@ -362,6 +434,11 @@ void mainPrompt() {
 int userQuit() {
 	std::cout << "\nThank you for choosing the Bank of Nessus!" << std::endl;
 	return 0;
+}
+
+void saveData() {
+	std::ofstream outfile;
+	outfile.open("datastore.txt");
 }
 
 void checkingPlan(std::string plan, double &minBalance, double &serviceCharges, double &rate) {
@@ -388,3 +465,9 @@ void savingsPlan(std::string plan, double &rate) {
 	else std::cout << "Invalid savings plan." << std::endl;
 }
 
+bool allDigits(std::string line)
+{
+	    char* p;
+		    strtol(line.c_str(), &p, 10);
+			    return *p == 0;
+}

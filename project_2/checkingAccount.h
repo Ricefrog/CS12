@@ -5,7 +5,7 @@ class checkingAccount: public bankAccount {
 public:
 	//constructor
 	//name, balance, minimum balance, service charge, interest rate
-	checkingAccount(std::string = "Anonymous", double = 0.0, double = 0.0, double = 0.0, double = 0.0);
+	checkingAccount(std::string = "Anonymous", double = 0.0, double = 0.0, double = 0.0, double = 0.0, std::string = "password");
 
 	void setInterestRate(double);
 	double getInterestRate() const;
@@ -24,7 +24,7 @@ public:
 	double withdraw(double);
 	
 	//will transfer money to the account specified
-	void writeCheck(checkingAccount&, double); 
+	void writeCheck(checkingAccount*, double); 
 
 	void info() const;
 	checkingAccount *next;
@@ -36,8 +36,8 @@ private:
 	double interestRate;
 };
 
-checkingAccount::checkingAccount(std::string name, double balance, double minBalance, double charge, double rate) 
-	: bankAccount(name, balance) {
+checkingAccount::checkingAccount(std::string name, double balance, double minBalance, double charge, double rate, std::string pass) 
+	: bankAccount(name, balance, pass) {
 	minimumBalance = minBalance;
 	serviceCharges = charge;
 	interestRate = rate;
@@ -85,18 +85,19 @@ bool checkingAccount::isAboveMinimum() const {
 double checkingAccount::withdraw(double amount) {
 	double retVal = bankAccount::withdraw(amount);
 	//will not continue if account has insufficient funds
-	if (retVal != -90000) {
-		if (!isAboveMinimum()) {
+	if (retVal >= 0) {
+		if (!isAboveMinimum() && !willBeCharged) {
 			char c;
 			printf("\nWithdrawing $%.2f will put your account ", amount);
-			printf("below the required minimum balance of %.2f.\n", minimumBalance);
+			printf("below the required minimum balance of $%.2f.\n", minimumBalance);
 			printf("If you proceed, you will be charged $%.2f at the end of the month.", serviceCharges);
 			printf("\nContinue?(y or n): ");
 			std::cin >> c;
 
 			if (tolower(c) == 'n') {
 				printf("Withdrawal cancelled.\n");
-				return deposit(amount);
+				deposit(amount);
+				return -90000;
 			}
 
 			willBeCharged = true;
@@ -106,16 +107,18 @@ double checkingAccount::withdraw(double amount) {
 }
 
 // In main, create another function to find an account by name or number. Error checking should also be done in main.
-void checkingAccount::writeCheck(checkingAccount &toThisAccount, double amount) {
-	if (checkingAccount::withdraw(amount) <= 0) {
-		toThisAccount.deposit(amount);
+void checkingAccount::writeCheck(checkingAccount *toThisAccount, double amount) {
+	if (checkingAccount::withdraw(amount) >= 0) {
+		toThisAccount->deposit(amount);
 		printf("You have written a check of $%.2f to ", amount);
-		printf("%s's bank account.", toThisAccount.getAccountName());
+		std::cout << toThisAccount->getAccountName()
+			<< "'s checking account." << std::endl;
 	}
 }
 
 void checkingAccount::info() const {
 	bankAccount::info();	
+	std::cout << "Account Type: Checking" << std::endl;
 	std::string chargeStatus = willBeCharged ? "Yes" : "No"; 
 	printf("Minimum Balance: $%.2f\n", minimumBalance);
 	printf("Service Charges: $%.2f\n", serviceCharges);
