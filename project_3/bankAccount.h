@@ -1,5 +1,11 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
+#include <ctime>
+
+#ifndef B_TEST
+#define B_TEST
+std::string getCurrentTime();
 
 template <class type>
 void fixSign(type &num) {
@@ -10,12 +16,21 @@ void fixSign(type &num) {
 class bankAccount {
 public:
 	bankAccount(std::string = "anonymous", double = 0.0);
+
 	std::string getAccountName() const;
+	int getAccountNumber() const;
+	double getAccountBalance() const;
+	std::string getTransactionStr() const;
+
+	double deposit(double);
+	double withdraw(double);
 	void info() const;
 	
 	bankAccount *next;
 	static int totalAccounts;
 	static bankAccount *root;
+protected:
+	std::string transactions;
 private:
 	int accountNumber;
 	std::string accountName;
@@ -41,6 +56,8 @@ bankAccount *findName(std::string searchName, bankAccount *cur) {
 }
 
 bankAccount::bankAccount(std::string name, double balance) {
+	transactions = "created("+getCurrentTime()+")";
+
 	char nameModifier = 'S';
 	fixSign(balance);
 	accountBalance = balance;
@@ -71,6 +88,36 @@ std::string bankAccount::getAccountName() const {
 	return accountName;
 }
 
+int bankAccount::getAccountNumber() const {
+	return accountNumber;
+};
+
+double bankAccount::getAccountBalance() const {
+	return accountBalance;
+};
+
+std::string bankAccount::getTransactionStr() const {
+	return transactions;
+}
+
+double bankAccount::deposit(double amount) {
+	fixSign(amount);
+	std::string temp = "deposit("+std::to_string(amount)+")";
+	transactions += temp;
+	return (accountBalance += amount);
+}
+ 
+double bankAccount::withdraw(double amount) {
+	fixSign(amount);
+	if (accountBalance - amount >= 0) {
+		std::string temp = "withdraw("+std::to_string(amount)+")";
+		transactions += temp;
+		return (accountBalance -= amount);
+	}
+	std::cout << "\nInsufficient funds.\n";
+	return -1;
+}
+
 void bankAccount::info() const {
 	std::cout << std::fixed << std::setprecision(2);
 	std::cout << "Account Number: " << accountNumber << std::endl;
@@ -78,4 +125,11 @@ void bankAccount::info() const {
 	std::cout << "Balance: " << accountBalance;
 }
 
-
+std::string getCurrentTime() {
+	auto curTime = std::chrono::system_clock::now();
+	std::time_t time = std::chrono::system_clock::to_time_t(curTime);
+	std::string timeStr = std::ctime(&time);
+	timeStr.pop_back();
+	return timeStr;
+}
+#endif
