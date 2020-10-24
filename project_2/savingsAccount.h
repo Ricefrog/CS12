@@ -9,7 +9,7 @@ public:
 	void setInterestRate(double);
 	double getInterestRate() const;
 	//Returns the balance in x number of years, interest is assumed to compound annually
-	double interestGains(int) const;
+	//double interestGains(int) const;
 	
 	void info() const;
 	savingsAccount *next;

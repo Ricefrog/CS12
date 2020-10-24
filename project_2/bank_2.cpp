@@ -1,21 +1,23 @@
-#include <iostream>
-#include <iomanip>
-#include <fstream>
+#include <iostream> 					//Koa Calloway 
+#include <iomanip>						//CS12 Project 2
+#include <fstream>						//10/15/20
 #include "bankAccount.h"
 #include "checkingAccount.h"
 #include "savingsAccount.h"
 
 #define inputPrompt() std::cout << "[" << currentUser << "@nessus]$ "
 
-#define EXEC(type, ptr, member) if (!type)\
-					(static_cast<checkingAccount*>(ptr))->member;\
-				else \
-					(static_cast<savingsAccount*>(ptr))->member;
+#define EXEC(type, ptr, member)\
+	if (!type)\
+		(static_cast<checkingAccount*>(ptr))->member;\
+	else \
+		(static_cast<savingsAccount*>(ptr))->member;
 
-#define ASSIGN(lVal, type, ptr, member) if (!type)\
-					lVal = (static_cast<checkingAccount*>(ptr))->member;\
-				else \
-					lVal = (static_cast<savingsAccount*>(ptr))->member;
+#define ASSIGN(lVal, type, ptr, member)\
+	if (!type)\
+		lVal = (static_cast<checkingAccount*>(ptr))->member;\
+	else \
+		lVal = (static_cast<savingsAccount*>(ptr))->member;
 
 checkingAccount *newCAccount(); 
 savingsAccount *newSAccount();
@@ -27,7 +29,7 @@ void saveData(checkingAccount*, savingsAccount*);
 //will modify minimum balance, service charges, and interest rate
 //based on the plan specified in the string variable
 void checkingPlan(std::string, double&, double&, double&);
-//modifies interestRate variable based on the plan specified
+//will modify interestRate variable based on the plan specified
 void savingsPlan(std::string, double&);
 bool allDigits(std::string);
 
@@ -62,7 +64,6 @@ void signFix(type &num) {
 		num = -1 * num;
 }
 
-//This string is used in all the prompts
 std::string currentUser = "user";
 int *totalAccounts = &bankAccount::totalAccounts;
 //0 for checking account, 1 for savings account
@@ -83,7 +84,7 @@ int main(void) {
 	std::string checkEnd;
 	infile.open("datastore.txt");
 
-	//load account from file.
+	//load accounts from file.
 	while (infile >> checkEnd) {
 
 		if (!checkEnd.compare("endfile"))
@@ -109,7 +110,7 @@ int main(void) {
 		}
 		name.pop_back();
 
-		//tempStr now holds the account typea
+		//tempStr now holds the account type
 		accountType = tempStr;
 		infile >> initBalance;
 		infile >> plan;
@@ -157,16 +158,15 @@ int main(void) {
 	q = firstS;
 	while (q->next != nullptr)
 		q = q->next;
-	//p and q now point to the last account in the lists
 
-	//printAll(firstC);
-	//printAll(firstS);
-		
+	//p and q now point to the last account of their account lists.
 	//All accounts have been loaded from the file.
+
 	checkingAccount *userCAccount;
 	savingsAccount *userSAccount;
 	std::string searchName, password;
 
+	//Log In, Sign Up, or Quit
 	START:
 	startupPrompt();
 	std::cin >> c;
@@ -233,20 +233,20 @@ int main(void) {
 	default:
 		return userQuit(firstC, firstS);
 	}
-	//At this point one of the account ponters should hold the 
-	//current user's account and type should reflect the type 
-	//of account that the user created or logged in to.
+	//one of these account pointers points to the account that the 
+	//current user has created or logged in to.
 	void *userAccount;
 	if (!type)
 		userAccount = userCAccount;
 	else 
 		userAccount = userSAccount;
 	
-	//EXEC(type, userAccount, info());
 	ASSIGN(currentUser, type, userAccount, getAccountName());
 	std::cin.clear();
 	std::cin.ignore(255, '\n');
 	std::cout << std::fixed << std::setprecision(2);
+	
+	//main selection prompt
 	while (1) {
 		double amount;
 		double balance;
