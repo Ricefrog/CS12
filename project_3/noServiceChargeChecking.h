@@ -8,7 +8,13 @@ public:
 	//Parameters: accountType, accountName, accountBalance, interestRate, minimumBalance,
 	//balanceFee
 	noServiceChargeChecking(accountType = nSCC, std::string = "anonymous", double = 0.0, 
-			double = 0.0, double = 0.0, double = 0.0);
+			double = 0.0, double = 0.0, double = 0.0, bool = false);
+	
+	double getInterestRate() const;
+	double getMinimumBalance() const;
+	double getBalanceFee() const;
+	bool getFeeInvoked() const;
+
 	double withdraw(double) override;
 	double writeCheck(double amount, bankAccount *target) override; 
 	void info() const override;
@@ -20,14 +26,30 @@ private:
 };
 
 noServiceChargeChecking::noServiceChargeChecking(accountType t, std::string name, 
-	double balance, double rate, double minBal, double fee) :
+	double balance, double rate, double minBal, double fee, bool feeInv) :
 	checkingAccount(t, name, balance) {
 	fixSign(rate);
 	fixSign(minBal);
 	interestRate = rate;
 	minimumBalance = minBal;
 	balanceFee = fee;
-	feeInvoked = false;
+	feeInvoked = feeInv;
+}
+
+double noServiceChargeChecking::getInterestRate() const {
+	return interestRate;
+}
+
+double noServiceChargeChecking::getMinimumBalance() const {
+	return minimumBalance;
+}
+
+double noServiceChargeChecking::getBalanceFee() const {
+	return balanceFee;
+}
+
+bool noServiceChargeChecking::getFeeInvoked() const {
+	return feeInvoked;
 }
 
 //Returns -1 if the account does not have enough money.

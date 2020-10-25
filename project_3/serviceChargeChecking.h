@@ -1,15 +1,20 @@
 #include <iostream>
 #include "checkingAccount.h"
 
+#ifndef SCC_TEST
+#define SCC_TEST
 class serviceChargeChecking : public checkingAccount {
 public:
 	//Parameters: accoutnType, accountName, accountBalance, checkLimit, serviceCharge, checksWritten
 	serviceChargeChecking(accountType = sCC, std::string = "anonymous", double = 0.0, 
-			int = 3, double = 0.0, int = 0);
+			int = 3, int = 0, double = 0.0);
+	
+	//getters and setters
 	int getCheckLimit() const;
 	void setCheckLimit(int);
 	int getChecksWritten() const;
 	void setChecksWritten(int);
+	double getServiceCharge() const;
 
 	double writeCheck(double, bankAccount*) override;
 	void info() const override;
@@ -20,7 +25,7 @@ private:
 };
 
 serviceChargeChecking::serviceChargeChecking(accountType t, std::string name, double balance,
-	int limit, double charge, int written) : checkingAccount(t, name, balance) {
+	int limit, int written, double charge) : checkingAccount(t, name, balance) {
 	fixSign(limit);
 	checkLimit = limit;
 	fixSign(charge);
@@ -36,6 +41,19 @@ int serviceChargeChecking::getCheckLimit() const {
 void serviceChargeChecking::setCheckLimit(int amount) {
 	fixSign(amount);
 	checkLimit = amount;
+}
+
+int serviceChargeChecking::getChecksWritten() const {
+	return checksWritten;
+}
+
+void serviceChargeChecking::setChecksWritten(int num) {
+	fixSign(num);
+	checksWritten = num;
+}
+
+double serviceChargeChecking::getServiceCharge() const {
+	return serviceCharge;
 }
 
 //Returns -1 if the account does not have enough money or 
@@ -75,3 +93,4 @@ void serviceChargeChecking::info() const {
 	std::cout << "Check Limit: " << checkLimit << std::endl;
 	std::cout << "Checks Written: " << checksWritten << std::endl;
 }
+#endif

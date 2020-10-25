@@ -1,6 +1,8 @@
 #include <iostream>
 #include "bankAccount.h"
 
+#ifndef CERT_TEST
+#define CERT_TEST
 class certificateOfDeposit : public bankAccount {
 public:
 	//Parameters: accoutnType, accountName, accountBalance, interestRate, 
@@ -8,6 +10,7 @@ public:
 	certificateOfDeposit(accountType = cOD, std::string = "anonymous", double = 0.0, double = 0.0,
 			int = 5, int = 0);
 	int incrementMonths();
+	double getInterestRate() const;
 	int getCurrentMonths() const;
 	int getMaturityMonths() const;
 
@@ -34,6 +37,10 @@ certificateOfDeposit::certificateOfDeposit(accountType t, std::string name, doub
 
 int certificateOfDeposit::incrementMonths() {
 	return ++currentMonths;
+}
+
+double certificateOfDeposit::getInterestRate() const {
+	return interestRate;
 }
 
 int certificateOfDeposit::getCurrentMonths() const {
@@ -89,3 +96,4 @@ void certificateOfDeposit::info() const {
 	else 
 		std::cout << "Mature" << std::endl;
 }
+#endif

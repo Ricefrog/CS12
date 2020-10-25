@@ -1,7 +1,6 @@
 #include <iostream>
 #include "parseAndWrite.h"
 #include "bankAccount.h"
-#include "checkingAccount.h"
 #include "serviceChargeChecking.h"
 #include "noServiceChargeChecking.h"
 #include "highInterestChecking.h"

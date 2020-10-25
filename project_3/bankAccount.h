@@ -68,6 +68,21 @@ bankAccount *findName(std::string searchName, bankAccount *cur) {
 	return findName(searchName, cur->next);
 }
 
+void printAllInfo(bankAccount *current) {
+	if (current == nullptr)
+		return;
+	current->info();
+	printf("\n");
+	printAllInfo(current->next);
+}
+
+void printAllTransactionStr(bankAccount *current) {
+	if (current == nullptr)
+		return;
+	std::cout << current->getTransactionStr() << std::endl;
+	printAllTransactionStr(current->next);
+}
+
 bankAccount::bankAccount(accountType t, std::string name, double balance) {
 	transactions = "created("+getCurrentTime()+")";
 
