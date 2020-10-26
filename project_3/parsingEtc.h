@@ -54,6 +54,8 @@ void hISInfo();
 accountType accountSelectionMenu();
 bankAccount *enemySelectScreen();
 bool allEnemiesDefeated();
+void battleField(bankAccount*, bankAccount*);
+void healthBar(double, double);
 int quit();
 void psuedoClear();
 void horizontalLine(int, char);
@@ -357,6 +359,7 @@ bankAccount *enemySelectScreen() {
 	std::cout << "\n~I\'m ready to battle! -> any character\n" << std::endl;
 	USER_PROMPT;
 	std::cin >> selection;
+	std::cin.clear();
 	return selectedEnemy;
 }
 
@@ -368,6 +371,37 @@ bool allEnemiesDefeated() {
 		current = current->next;
 	}
 	return true;
+}
+
+void battleField(bankAccount *userAccount, bankAccount *enemyAccount) {
+	double maxUserBalance = userAccount->startingBalance;
+	double maxEnemyBalance = enemyAccount->startingBalance;
+	double userBalance = userAccount->getAccountBalance();
+	double enemyBalance = enemyAccount->getAccountBalance();
+	std::string enemyName = enemyAccount->getAccountName();
+	char temp;
+	
+	psuedoClear();
+	std::cout << enemyName << std::endl;
+	healthBar(maxEnemyBalance, enemyBalance);
+	std::cout << "\n\n" << userName << std::endl;
+	healthBar(maxUserBalance, userBalance);
+	printf("\n\n");	
+	USER_PROMPT;
+	std::cin >> temp;
+}
+
+void healthBar(double max, double current) {
+	int maxDots = 20;
+	int ratio = maxDots*(max/current);
+
+	std::cout << "Balance: [";
+	for (int i = 0; i < maxDots; i++) 
+		std::cout << "*";
+	for (int i = 0; i < (maxDots-ratio); i++) 
+		std::cout << " ";
+	std::cout << "] " << current << "/" << max;	
+
 }
 
 int quit() {

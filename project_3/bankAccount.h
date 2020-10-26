@@ -39,6 +39,7 @@ public:
 	static int totalAccounts;
 	bankAccount *next;
 	static bankAccount *root;
+	double startingBalance;
 
 protected:
 	std::string transactions;
@@ -90,6 +91,7 @@ bankAccount::bankAccount(accountType t, std::string name, double balance) {
 	char nameModifier = 'S';
 	fixSign(balance);
 	accountBalance = balance;
+	startingBalance = balance;
 
 	while (findName(name, root) != nullptr) {
 		nameModifier++;

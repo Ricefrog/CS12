@@ -66,6 +66,15 @@ int main() {
 	std::cin >> temp;
 	while (!allEnemiesDefeated()) {
 		enemyAccount = enemySelectScreen();
+		if (enemyAccount->getAccountBalance() < 0) {
+			psuedoClear();
+			std::cout << "Enemy is already defeated.\n" << std::endl;
+			std::cout << "~Continue -> any character\n" << std::endl;
+			USER_PROMPT;
+			std::cin >> temp;
+			continue;
+		}
+		battleField(userAccount, enemyAccount);
 	}
 	//printAllInfo(rootAccount);
 	//printAllTransactionStr(rootAccount);
