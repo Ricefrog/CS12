@@ -1,5 +1,5 @@
 #include <iostream>
-#include "parseAndWrite.h"
+#include "parsingEtc.h"
 #include "bankAccount.h"
 #include "serviceChargeChecking.h"
 #include "noServiceChargeChecking.h"
@@ -9,7 +9,7 @@
 #include "certificateOfDeposit.h"
 
 bool nameChangeNotification = true;
-int monthOffset = 2;
+int monthOffset = 0;
 
 int main(void) {
 	std::cout << "Service Checking: " << std::endl;
