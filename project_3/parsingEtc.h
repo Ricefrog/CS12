@@ -54,7 +54,8 @@ void hISInfo();
 accountType accountSelectionMenu();
 bankAccount *enemySelectScreen();
 bool allEnemiesDefeated();
-void battleField(bankAccount*, bankAccount*);
+void battleField(bankAccount*, bankAccount*, int);
+int battlePrompt(bankAccount*);
 void healthBar(double, double);
 int quit();
 void psuedoClear();
@@ -348,6 +349,8 @@ bankAccount *enemySelectScreen() {
 	printf("\n");
 	USER_PROMPT;
 	std::cin >> selection;
+	if (selection > 5)
+		selection = 0;
 	psuedoClear();
 	
 	selectedEnemy = bankAccount::root;
@@ -373,22 +376,147 @@ bool allEnemiesDefeated() {
 	return true;
 }
 
-void battleField(bankAccount *userAccount, bankAccount *enemyAccount) {
+void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
+		int months) {
+	accountType userType = userAccount->getAccountType();
+	accountType enemyType = enemyAccount->getAccountType();
 	double maxUserBalance = userAccount->startingBalance;
 	double maxEnemyBalance = enemyAccount->startingBalance;
 	double userBalance = userAccount->getAccountBalance();
 	double enemyBalance = enemyAccount->getAccountBalance();
 	std::string enemyName = enemyAccount->getAccountName();
 	char temp;
+
+	if (userBalance > maxUserBalance) 
+		maxUserBalance = userBalance;
+	if (enemyBalance > maxEnemyBalance)
+		maxEnemyBalance = enemyBalance;
 	
 	psuedoClear();
-	std::cout << enemyName << std::endl;
+	std::cout << "MONTHS: " << months << std::endl << std::endl;
+	std::cout << "x " << enemyName << " x" << std::endl;
 	healthBar(maxEnemyBalance, enemyBalance);
-	std::cout << "\n\n" << userName << std::endl;
+	printf("\n");
+	if (enemyType == nSCC || enemyType == hIC || enemyType == hIS) {
+		noServiceChargeChecking *tempA;
+		highInterestChecking *tempB;
+		highInterestSavings *tempC;
+		double rate; 
+		double min; 
+		double fee; 
+		switch (enemyType) {
+		case nSCC:
+			tempA = static_cast<noServiceChargeChecking*>(enemyAccount);
+			rate = tempA->getInterestRate();
+			min = tempA->getMinimumBalance();
+			fee = tempA->getBalanceFee();
+		case hIC:
+			tempB = static_cast<highInterestChecking*>(enemyAccount);
+			rate = tempB->getInterestRate();
+			min = tempB->getMinimumBalance();
+			fee = tempB->getBalanceFee();
+		case hIS:
+			tempC = static_cast<highInterestSavings*>(enemyAccount);
+			rate = tempC->getInterestRate();
+			min = tempC->getMinimumBalance();
+			fee = tempC->getBalanceFee();
+		}
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		std::cout << "Minimum Balance: $" << min << std::endl;
+		std::cout << "Minimum Balance Fee: $" << fee << std::endl;
+	} else if (enemyType == sCC) {
+		serviceChargeChecking *tempA = static_cast<serviceChargeChecking*>(enemyAccount);
+		int limit = tempA->getCheckLimit();
+		int written = tempA->getChecksWritten();
+		double charge = tempA->getServiceCharge();
+		std::cout << "Check Limit: " << limit << std::endl;
+		std::cout << "Checks Written: " << written << std::endl;
+		std::cout << "Service Charge: $" << charge << std::endl;
+	} else if (enemyType == sA) {
+		savingsAccount *tempA = static_cast<savingsAccount*>(enemyAccount);
+		double rate = tempA->getInterestRate();
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+	} else {
+		certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(enemyAccount);
+		double rate = tempA->getInterestRate();
+		int mMonths = tempA->getMaturityMonths();
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		if (mMonths - months <= 0)
+			std::cout << "xX MATURE Xx" << std::endl;
+		else
+			std::cout << "Months Until MATURE: " << mMonths-months << std::endl;
+	}
+	std::cout << "\n\n$ " << userName << " $" << std::endl;
 	healthBar(maxUserBalance, userBalance);
-	printf("\n\n");	
+	printf("\n");
+	if (userType == nSCC || userType == hIC || userType == hIS) {
+		noServiceChargeChecking *tempA;
+		highInterestChecking *tempB;
+		highInterestSavings *tempC;
+		double rate; 
+		double min; 
+		double fee; 
+		switch (userType) {
+		case nSCC:
+			tempA = static_cast<noServiceChargeChecking*>(enemyAccount);
+			rate = tempA->getInterestRate();
+			min = tempA->getMinimumBalance();
+			fee = tempA->getBalanceFee();
+		case hIC:
+			tempB = static_cast<highInterestChecking*>(enemyAccount);
+			rate = tempB->getInterestRate();
+			min = tempB->getMinimumBalance();
+			fee = tempB->getBalanceFee();
+		case hIS:
+			tempC = static_cast<highInterestSavings*>(enemyAccount);
+			rate = tempC->getInterestRate();
+			min = tempC->getMinimumBalance();
+			fee = tempC->getBalanceFee();
+		}
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		std::cout << "Minimum Balance: $" << min << std::endl;
+		std::cout << "Minimum Balance Fee: $" << fee << std::endl;
+	} else if (userType == sCC) {
+		serviceChargeChecking *tempA = static_cast<serviceChargeChecking*>(userAccount);
+		int limit = tempA->getCheckLimit();
+		int written = tempA->getChecksWritten();
+		double charge = tempA->getServiceCharge();
+		std::cout << "Check Limit: " << limit << std::endl;
+		std::cout << "Checks Written: " << written << std::endl;
+		std::cout << "Service Charge: $" << charge << std::endl;
+	} else if (userType == sA) {
+		savingsAccount *tempA = static_cast<savingsAccount*>(userAccount);
+		double rate = tempA->getInterestRate();
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+	} else {
+		certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(userAccount);
+		double rate = tempA->getInterestRate();
+		int mMonths = tempA->getMaturityMonths();
+		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		if (mMonths - months <= 0)
+			std::cout << "xX MATURE Xx" << std::endl;
+		else
+			std::cout << "Months Until MATURE: " << mMonths-months << std::endl;
+	}
+}
+
+int battlePrompt(bankAccount *userAccount) {
+	int selection;
+	int i = 2;
+	accountType type = userAccount->getAccountType();
+
+	printf("\n\n");
+	drawBox("What will you do?", '.');
+	printf("\n\n");
+	std::cout << "~Attack                  -> 0" << std::endl;
+	std::cout << "~Do nothing              -> 1" << std::endl;
+	if (type < cOD)
+		std::cout << "~Write check             -> " << i++ << std::endl;
+	std::cout << "~View monthly statements -> " << i++ << std::endl;
+	printf("\n");
 	USER_PROMPT;
-	std::cin >> temp;
+	std::cin >> selection;
+	return selection;
 }
 
 void healthBar(double max, double current) {
@@ -400,7 +528,7 @@ void healthBar(double max, double current) {
 		std::cout << "*";
 	for (int i = 0; i < (maxDots-ratio); i++) 
 		std::cout << " ";
-	std::cout << "] " << current << "/" << max;	
+	std::cout << "] " << "$" << current << "/$" << max;	
 
 }
 

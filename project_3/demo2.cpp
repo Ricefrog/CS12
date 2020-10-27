@@ -64,7 +64,11 @@ int main() {
 	std::cout << "\n~Continue -> any character\n" << std::endl;
 	USER_PROMPT;
 	std::cin >> temp;
+
+	int selection;
+	int months; 
 	while (!allEnemiesDefeated()) {
+		months = 0;
 		enemyAccount = enemySelectScreen();
 		if (enemyAccount->getAccountBalance() < 0) {
 			psuedoClear();
@@ -72,9 +76,16 @@ int main() {
 			std::cout << "~Continue -> any character\n" << std::endl;
 			USER_PROMPT;
 			std::cin >> temp;
-			continue;
+			std::cin.clear();
+		} else {
+			std::cin >> temp;
+			while (enemyAccount->getAccountBalance() > 0 
+					&& userAccount->getAccountBalance() > 0) {
+				battleField(userAccount, enemyAccount, months);
+				selection = battlePrompt(userAccount);
+				months++;
+			}
 		}
-		battleField(userAccount, enemyAccount);
 	}
 	//printAllInfo(rootAccount);
 	//printAllTransactionStr(rootAccount);
