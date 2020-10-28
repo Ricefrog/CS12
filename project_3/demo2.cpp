@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "parsingEtc.h"
 #include "bankAccount.h"
 #include "serviceChargeChecking.h"
@@ -10,12 +11,15 @@
 
 int monthOffset = 0;
 bool nameChangeNotification = false;
+
 int main() {
 	char userInput;	
 	char temp;
+	int intTemp;
 	bankAccount *rootAccount = readData();
 	bankAccount *userAccount;
 	bankAccount *enemyAccount;
+	certificateOfDeposit *setInitDelay;
 	
 	startScreen();
 	std::cin >> userInput;
@@ -47,6 +51,9 @@ int main() {
 		userAccount = new certificateOfDeposit(userAccType, userName, 
 					15000, cODInterestRate, cODMaturityMonths, 
 					0);
+		setInitDelay = static_cast<certificateOfDeposit*>(userAccount);
+		intTemp = setInitDelay->getMaturityMonths();
+		setInitDelay->setMonthsDelayed(intTemp);
 		break;
 	case sA:
 		userAccount = new savingsAccount(userAccType, userName, 
@@ -66,11 +73,17 @@ int main() {
 	std::cin >> temp;
 
 	int selection;
-	int months; 
+	int enemySelection;
+	double userActionValue;
+	double enemyActionValue;
+	accountType enemyAccType;
+	serviceChargeChecking *tempS = static_cast<serviceChargeChecking*>(userAccount);
 	while (!allEnemiesDefeated()) {
 		months = 0;
+		records.clear();
 		enemyAccount = enemySelectScreen();
-		if (enemyAccount->getAccountBalance() < 0) {
+		enemyAccType = enemyAccount->getAccountType();
+		if (enemyAccount->getAccountBalance() <= 0) {
 			psuedoClear();
 			std::cout << "Enemy is already defeated.\n" << std::endl;
 			std::cout << "~Continue -> any character\n" << std::endl;
@@ -83,7 +96,53 @@ int main() {
 					&& userAccount->getAccountBalance() > 0) {
 				battleField(userAccount, enemyAccount, months);
 				selection = battlePrompt(userAccount);
-				months++;
+				enemySelection = enemySelect(enemyAccount, userAccount);
+				enemyActionValue = enemyValue(enemyAccount, enemySelection);
+
+				switch (selection) {
+				case 0:
+					battleField(userAccount, enemyAccount, months);
+					userActionValue = attackPrompt(userAccount);
+					break;
+				case 1:
+					battleField(userAccount, enemyAccount, months);
+					userActionValue = 0;
+					break;
+				case 2:
+					if (userAccType == sCC) {
+						if (!(tempS->canWriteCheck())) {
+							selection = 3;
+							goto mS;
+						}
+					}
+					if (userAccType > hIC) {
+						selection = 3;
+						goto mS;
+					}
+					battleField(userAccount, enemyAccount, months);
+					userActionValue = checkPrompt(userAccount, enemyAccount);
+					break;
+				case 3:
+					mS:
+					battleField(userAccount, enemyAccount, months);
+					std::cout << "In progress" << std::endl;	
+					break;
+				default:
+					battleField(userAccount, enemyAccount, months);
+					std::cout << "In progress" << std::endl;	
+					//do nothing
+				}
+
+				if (selection == 3) {
+					std::cout << "view monthly statements" << std::endl;
+				} else {
+					accountInteractions(userAccount, enemyAccount, 
+							selection, enemySelection,
+							userActionValue, enemyActionValue, records);
+					records.push_back("break");
+					months++;
+					monthlyUpdate(userAccount, enemyAccount, records); 
+				 }
 			}
 		}
 	}

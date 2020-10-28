@@ -15,6 +15,7 @@ public:
 	int getChecksWritten() const;
 	void setChecksWritten(int);
 	double getServiceCharge() const;
+	bool canWriteCheck() const;
 
 	double writeCheck(double, bankAccount*) override;
 	void info() const override;
@@ -54,6 +55,10 @@ void serviceChargeChecking::setChecksWritten(int num) {
 
 double serviceChargeChecking::getServiceCharge() const {
 	return serviceCharge;
+}
+
+bool serviceChargeChecking::canWriteCheck() const {
+	return (checksWritten < checkLimit);
 }
 
 //Returns -1 if the account does not have enough money or 

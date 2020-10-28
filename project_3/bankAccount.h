@@ -10,6 +10,8 @@
 //Otherwise, set to false.
 extern bool nameChangeNotification; 
 extern int monthOffset;
+extern bool battleMode;
+bool battleMode = true;
 enum accountType {sCC, nSCC, hIC, cOD, sA, hIS};
 std::string getCurrentTime();
 
@@ -30,6 +32,10 @@ public:
 	std::string getTransactionStr() const;
 	void setTransactionStr(std::string);
 	accountType getAccountType() const;
+	bool isDelayed() const;
+	int getMonthsDelayed() const;
+	void setMonthsDelayed(int);
+	void decrementMonthsDelayed();
 
 	virtual double deposit(double);
 	virtual double withdraw(double);
@@ -48,6 +54,8 @@ private:
 	int accountNumber;
 	std::string accountName;
 	double accountBalance;
+	bool delayed;
+	int monthsDelayed;
 };
 
 bankAccount *bankAccount::root = nullptr;
@@ -92,6 +100,8 @@ bankAccount::bankAccount(accountType t, std::string name, double balance) {
 	fixSign(balance);
 	accountBalance = balance;
 	startingBalance = balance;
+	delayed = false;
+	monthsDelayed = false;
 
 	while (findName(name, root) != nullptr) {
 		nameModifier++;
@@ -128,7 +138,6 @@ double bankAccount::getAccountBalance() const {
 };
 
 void bankAccount::setAccountBalance(double newBalance) {
-	fixSign(newBalance);
 	accountBalance = newBalance;
 }
 
@@ -142,6 +151,26 @@ void bankAccount::setTransactionStr(std::string str) {
 
 accountType bankAccount::getAccountType() const {
 	return type;
+}
+
+bool bankAccount::isDelayed() const {
+	return delayed;
+}
+
+int bankAccount::getMonthsDelayed() const {
+	return monthsDelayed;
+}
+
+void bankAccount::setMonthsDelayed(int m) {
+	fixSign(m);
+	monthsDelayed = m;
+	delayed = true;
+}
+
+void bankAccount::decrementMonthsDelayed() {
+	--monthsDelayed;
+	if (monthsDelayed == 0)
+		delayed = false;
 }
 
 //Returns the balance after deposit.
@@ -163,6 +192,9 @@ double bankAccount::withdraw(double amount) {
 		transactions += temp;
 		return (accountBalance -= amount);
 	}
+
+	if (battleMode)
+		return (accountBalance -= amount);
 	return -1;
 }
 

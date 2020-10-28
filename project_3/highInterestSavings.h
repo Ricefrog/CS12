@@ -13,6 +13,7 @@ public:
 	double getMinimumBalance() const;
 	double getBalanceFee() const;
 	bool getFeeInvoked() const;
+	void resetFee();
 
 	double withdraw(double) override;
 	void info() const override;
@@ -42,6 +43,10 @@ double highInterestSavings::getBalanceFee() const {
 
 bool highInterestSavings::getFeeInvoked() const {
 	return feeInvoked;
+}
+
+void highInterestSavings::resetFee() {
+	feeInvoked = false;
 }
 
 //Returns -1 if the account does not have enough money.

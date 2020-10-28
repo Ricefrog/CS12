@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
+#include <vector>
 #include "bankAccount.h"
 #include "serviceChargeChecking.h"
 #include "noServiceChargeChecking.h"
@@ -10,6 +12,9 @@
 
 extern std::string userName;
 std::string userName = "newUser";
+int months;
+std::vector<std::string> records;
+
 //turned off when debugging
 bool clearScreens = true;
 
@@ -56,6 +61,13 @@ bankAccount *enemySelectScreen();
 bool allEnemiesDefeated();
 void battleField(bankAccount*, bankAccount*, int);
 int battlePrompt(bankAccount*);
+int enemySelect(bankAccount*, bankAccount*);
+double attackPrompt(bankAccount*);
+double checkPrompt(bankAccount*, bankAccount*);
+void accountInteractions(bankAccount*, bankAccount*, int, int, double, double,
+	std::vector<std::string>&);
+void monthlyUpdates(bankAccount*, bankAccount*, std::vector<std::string>&);
+void recentActions(int, std::vector<std::string>&);
 void healthBar(double, double);
 int quit();
 void psuedoClear();
@@ -394,7 +406,10 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 	
 	psuedoClear();
 	std::cout << "MONTHS: " << months << std::endl << std::endl;
-	std::cout << "x " << enemyName << " x" << std::endl;
+	std::cout << "x " << enemyName << " x";
+	if (enemyAccount->isDelayed())
+		std::cout << " D E L A Y E D";
+	printf("\n");
 	healthBar(maxEnemyBalance, enemyBalance);
 	printf("\n");
 	if (enemyType == nSCC || enemyType == hIC || enemyType == hIS) {
@@ -421,7 +436,7 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 			min = tempC->getMinimumBalance();
 			fee = tempC->getBalanceFee();
 		}
-		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		std::cout << "Interest Rate: " << rate*100 << "%" << std::endl;
 		std::cout << "Minimum Balance: $" << min << std::endl;
 		std::cout << "Minimum Balance Fee: $" << fee << std::endl;
 	} else if (enemyType == sCC) {
@@ -434,11 +449,11 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		std::cout << "Service Charge: $" << charge << std::endl;
 	} else if (enemyType == sA) {
 		savingsAccount *tempA = static_cast<savingsAccount*>(enemyAccount);
-		double rate = tempA->getInterestRate();
+		double rate = tempA->getInterestRate()*100;
 		std::cout << "Interest Rate: " << rate << "%" << std::endl;
 	} else {
 		certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(enemyAccount);
-		double rate = tempA->getInterestRate();
+		double rate = tempA->getInterestRate()*100;
 		int mMonths = tempA->getMaturityMonths();
 		std::cout << "Interest Rate: " << rate << "%" << std::endl;
 		if (mMonths - months <= 0)
@@ -446,7 +461,10 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		else
 			std::cout << "Months Until MATURE: " << mMonths-months << std::endl;
 	}
-	std::cout << "\n\n$ " << userName << " $" << std::endl;
+	std::cout << "\n\n$ " << userName << " $";
+	if (userAccount->isDelayed())
+		std::cout << " D E L A Y E D";
+	printf("\n");
 	healthBar(maxUserBalance, userBalance);
 	printf("\n");
 	if (userType == nSCC || userType == hIC || userType == hIS) {
@@ -458,22 +476,22 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		double fee; 
 		switch (userType) {
 		case nSCC:
-			tempA = static_cast<noServiceChargeChecking*>(enemyAccount);
+			tempA = static_cast<noServiceChargeChecking*>(userAccount);
 			rate = tempA->getInterestRate();
 			min = tempA->getMinimumBalance();
 			fee = tempA->getBalanceFee();
 		case hIC:
-			tempB = static_cast<highInterestChecking*>(enemyAccount);
+			tempB = static_cast<highInterestChecking*>(userAccount);
 			rate = tempB->getInterestRate();
 			min = tempB->getMinimumBalance();
 			fee = tempB->getBalanceFee();
 		case hIS:
-			tempC = static_cast<highInterestSavings*>(enemyAccount);
+			tempC = static_cast<highInterestSavings*>(userAccount);
 			rate = tempC->getInterestRate();
 			min = tempC->getMinimumBalance();
 			fee = tempC->getBalanceFee();
 		}
-		std::cout << "Interest Rate: " << rate << "%" << std::endl;
+		std::cout << "Interest Rate: " << rate*100 << "%" << std::endl;
 		std::cout << "Minimum Balance: $" << min << std::endl;
 		std::cout << "Minimum Balance Fee: $" << fee << std::endl;
 	} else if (userType == sCC) {
@@ -486,11 +504,11 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		std::cout << "Service Charge: $" << charge << std::endl;
 	} else if (userType == sA) {
 		savingsAccount *tempA = static_cast<savingsAccount*>(userAccount);
-		double rate = tempA->getInterestRate();
+		double rate = tempA->getInterestRate() * 100;
 		std::cout << "Interest Rate: " << rate << "%" << std::endl;
 	} else {
 		certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(userAccount);
-		double rate = tempA->getInterestRate();
+		double rate = tempA->getInterestRate() * 100;
 		int mMonths = tempA->getMaturityMonths();
 		std::cout << "Interest Rate: " << rate << "%" << std::endl;
 		if (mMonths - months <= 0)
@@ -498,20 +516,28 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		else
 			std::cout << "Months Until MATURE: " << mMonths-months << std::endl;
 	}
+	recentActions(months, records);
 }
 
 int battlePrompt(bankAccount *userAccount) {
 	int selection;
 	int i = 2;
 	accountType type = userAccount->getAccountType();
+	serviceChargeChecking *tempA = static_cast<serviceChargeChecking*>(userAccount);
 
-	printf("\n\n");
+	printf("\n");
 	drawBox("What will you do?", '.');
 	printf("\n\n");
 	std::cout << "~Attack                  -> 0" << std::endl;
 	std::cout << "~Do nothing              -> 1" << std::endl;
-	if (type < cOD)
-		std::cout << "~Write check             -> " << i++ << std::endl;
+	if (type < cOD) {
+		if (type != sCC)
+			std::cout << "~Write check             -> " << i++ << std::endl;
+		else if (tempA->canWriteCheck()) {
+			std::cout << "~Write check             -> " << i++ << std::endl;
+		}
+
+	}
 	std::cout << "~View monthly statements -> " << i++ << std::endl;
 	printf("\n");
 	USER_PROMPT;
@@ -519,14 +545,400 @@ int battlePrompt(bankAccount *userAccount) {
 	return selection;
 }
 
+int enemySelect(bankAccount *enemyAccount, bankAccount *userAccount) {
+	srand(time(NULL));
+	accountType type = enemyAccount->getAccountType();
+	certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(enemyAccount);
+	serviceChargeChecking *tempB;
+	int selection = rand() % 100;
+	switch (type) {
+	case sCC:
+		tempB = static_cast<serviceChargeChecking*>(enemyAccount);
+		if (!tempB->canWriteCheck()) {
+			return 0;
+		}
+	case nSCC:
+	case hIC:
+		if (selection < 30)
+			return 0;
+		if (selection < 29 && selection < 80)
+			return 1;
+		userAccount->setMonthsDelayed(1);
+		return 2;
+	case cOD:
+		if (tempA->isMature())
+			return 0;
+		return 1;
+	default:
+		if (selection > 60)
+			return 1;
+		return 2;
+	}
+	return 1;	
+}
+
+double enemyValue(bankAccount *enemyAccount, int enemySelection) {
+	double enemyBalance = enemyAccount->getAccountBalance();
+	srand(time(NULL));
+	double randVal = (rand() % 100) * .001 + .01;
+
+	switch (enemySelection) {
+	case 0:
+		return (randVal * enemyBalance);
+	case 1:
+		return 0;
+	case 2:
+		return (randVal * enemyBalance);
+	}
+	return 0;
+}
+
+double attackPrompt(bankAccount *userAccount) {
+	double value;
+	printf("\n\n");
+	drawBox("How much are you going to spend?", '.');
+	printf("\n\n");
+	USER_PROMPT;
+	std::cout << "$";
+	std::cin >> value;
+	fixSign(value);
+	if (value > userAccount->getAccountBalance())
+		value = userAccount->getAccountBalance();
+	return value;
+}
+
+double checkPrompt(bankAccount *userAccount, bankAccount *enemyAccount) {
+	double enemyBalance = enemyAccount->getAccountBalance();
+	double oneTurn = enemyBalance/10;
+	double twoTurns = enemyBalance/5;
+	double selection;
+
+	printf("\n\n");
+	drawBox("How much are you going to spend?", '.');
+	printf("\n\n");
+	std::cout << "~Delay for one turn  (1): $" << oneTurn << std::endl;
+	std::cout << "~Delay for two turns (2): $" << twoTurns << std::endl;
+	printf("\n\n");
+	USER_PROMPT;
+	std::cin >> selection;
+	if (selection < 2) {
+		enemyAccount->setMonthsDelayed(1);
+		return oneTurn;
+	}
+	enemyAccount->setMonthsDelayed(2);
+	return twoTurns;
+}
+
+void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
+		int userSelection, int enemySelection,
+		double userActionValue, double enemyActionValue,
+		std::vector<std::string> &records) { 
+	accountType userType = userAccount->getAccountType();
+	accountType enemyType = enemyAccount->getAccountType();
+	checkingAccount *tempU = static_cast<checkingAccount*>(userAccount);
+	checkingAccount *tempE = static_cast<checkingAccount*>(enemyAccount);
+	serviceChargeChecking *userSCC;
+	serviceChargeChecking *enemySCC;
+	double userDmgModifier;
+	double enemyDmgModifier;
+	double userChargeOrFee;
+	double enemyChargeOrFee;
+	std::string enemyName = enemyAccount->getAccountName();
+	std::string enemyRecord;
+	std::string userRecord;
+
+	switch (userType) {
+	case sCC:
+		userDmgModifier = sCCDmgModifier;
+		userSCC = static_cast<serviceChargeChecking*>(userAccount);
+		userChargeOrFee = userSCC->getServiceCharge();
+		userAccount->withdraw(userChargeOrFee);
+		userRecord = userName+" was charged $"+std::to_string(userChargeOrFee)+".";
+		records.push_back(userRecord);
+		break;
+	case hIC:
+		userDmgModifier = hICDmgModifier;
+		break;
+	case cOD:
+		userDmgModifier = cODDmgModifier;
+		break;
+	default:
+		userDmgModifier = 1;
+	}
+
+	switch (enemyType) {
+	case sCC:
+		enemyDmgModifier = sCCDmgModifier;
+		enemySCC = static_cast<serviceChargeChecking*>(enemyAccount);
+		enemyChargeOrFee = enemySCC->getServiceCharge();
+		enemyAccount->withdraw(enemyChargeOrFee);
+		enemyRecord = enemyName+" was charged $"+std::to_string(enemyChargeOrFee)+".";
+		records.push_back(enemyRecord);
+		break;
+	case hIC:
+		enemyDmgModifier = hICDmgModifier;
+		break;
+	case cOD:
+		enemyDmgModifier = cODDmgModifier;
+		break;
+	default:
+		enemyDmgModifier = 1;
+	}
+	
+	switch (enemySelection) {
+	case 0:
+		if (enemyAccount->isDelayed()) 
+			enemyRecord = enemyName+"'s attack failed!";
+		else {
+			enemyAccount->withdraw(enemyActionValue);
+			userAccount->withdraw(enemyDmgModifier*enemyActionValue);
+			enemyRecord = enemyName+" attacked for $"+
+				std::to_string(enemyDmgModifier*enemyActionValue)+" damage.";
+		}
+		break;
+	case 1:
+		enemyRecord = enemyName+" just stood there and did nothing.";
+		break;
+	case 2:
+		if (userType != cOD) {
+			tempE->writeCheck(enemyActionValue, userAccount);
+			enemyRecord = enemyName+" wrote a check for $"+
+				std::to_string(enemyActionValue)+".";
+		} else {
+			enemyRecord = enemyName+"'s check bounced!";
+		}
+	}
+
+	switch (userSelection) {
+	case 0:
+		if (userAccount->isDelayed()) 
+			userRecord = userName+"'s attack failed!";
+		else {
+			userAccount->withdraw(userActionValue);
+			enemyAccount->withdraw(userDmgModifier*userActionValue);
+			userRecord = userName+" attacked for $"+
+				std::to_string(userDmgModifier*userActionValue)+" damage.";
+		}
+		break;
+	case 1:
+		userRecord = userName+" just stood there and did nothing.";
+		break;
+	case 2:
+		tempU->writeCheck(userActionValue, userAccount);
+		userRecord = userName+" wrote a check for $"+
+			std::to_string(userActionValue)+".";
+	}
+	records.push_back(enemyRecord);
+	records.push_back(userRecord);
+	enemyRecord = "";
+	userRecord = "";
+
+	if (userType == nSCC || userType == hIC || userType == hIS) {
+		noServiceChargeChecking *sTemp1;
+		highInterestChecking *sTemp2;
+		highInterestSavings *sTemp3;
+		switch (userType) {
+		case nSCC:
+			sTemp1 = static_cast<noServiceChargeChecking*>(userAccount);
+			if (sTemp1->getFeeInvoked()) {
+				userChargeOrFee = sTemp1->getBalanceFee();
+				userAccount->withdraw(userChargeOrFee);
+				userRecord = userName+" was fined $"+std::to_string(userChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp1->resetFee();
+			}
+			break;
+		case hIC:
+			sTemp2 = static_cast<highInterestChecking*>(userAccount);
+			if (sTemp2->getFeeInvoked()) {
+				userChargeOrFee = sTemp2->getBalanceFee();
+				userAccount->withdraw(userChargeOrFee);
+				userRecord = userName+" was fined $"+std::to_string(userChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp2->resetFee();
+			}
+			break;
+		case hIS:
+			sTemp3 = static_cast<highInterestSavings*>(userAccount);
+			if (sTemp3->getFeeInvoked()) {
+				userChargeOrFee = sTemp3->getBalanceFee();
+				userAccount->withdraw(userChargeOrFee);
+				userRecord = userName+" was fined $"+std::to_string(userChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp3->resetFee();
+			}
+			break;
+		}
+	}
+
+	if (enemyType == nSCC || enemyType == hIC || enemyType == hIS) {
+		noServiceChargeChecking *sTemp1;
+		highInterestChecking *sTemp2;
+		highInterestSavings *sTemp3;
+		switch (enemyType) {
+		case nSCC:
+			sTemp1 = static_cast<noServiceChargeChecking*>(enemyAccount);
+			if (sTemp1->getFeeInvoked()) {
+				enemyChargeOrFee = sTemp1->getBalanceFee();
+				enemyAccount->withdraw(enemyChargeOrFee);
+				enemyRecord = enemyName+" was fined $"+std::to_string(enemyChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp1->resetFee();
+			}
+			break;
+		case hIC:
+			sTemp2 = static_cast<highInterestChecking*>(enemyAccount);
+			if (sTemp2->getFeeInvoked()) {
+				enemyChargeOrFee = sTemp2->getBalanceFee();
+				enemyAccount->withdraw(enemyChargeOrFee);
+				enemyRecord = userName+" was fined $"+std::to_string(enemyChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp2->resetFee();
+			}
+			break;
+		case hIS:
+			sTemp3 = static_cast<highInterestSavings*>(enemyAccount);
+			if (sTemp3->getFeeInvoked()) {
+				enemyChargeOrFee = sTemp3->getBalanceFee();
+				enemyAccount->withdraw(userChargeOrFee);
+				enemyRecord = enemyName+" was fined $"+std::to_string(enemyChargeOrFee)+
+					" for going below their minimum balance.";
+				sTemp3->resetFee();
+			}
+			break;
+		}
+	}
+	if (enemyRecord.length() > 1)	
+		records.push_back(enemyRecord);
+	if (userRecord.length() > 1)
+		records.push_back(userRecord);
+}
+
+void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
+		std::vector<std::string> &records) {
+	double userBalance = userAccount->getAccountBalance();
+	double enemyBalance = enemyAccount->getAccountBalance();
+	double uInterestRate;
+	double eInterestRate;
+	int userType = userAccount->getAccountType();
+	int enemyType = userAccount->getAccountType();
+	std::string enemyName = enemyAccount->getAccountName();
+	std::string userRecord;
+	std::string enemyRecord;
+	noServiceChargeChecking *tempA;
+	highInterestChecking *tempB;
+	certificateOfDeposit *tempC;
+	savingsAccount *tempD;
+	highInterestSavings *tempE;
+
+	if (userAccount->isDelayed()) 
+		userAccount->decrementMonthsDelayed();
+	if (enemyAccount->isDelayed()) 
+		enemyAccount->decrementMonthsDelayed();
+
+	switch (enemyType) {
+	case sCC:
+		return;
+	case nSCC:
+		tempA = static_cast<noServiceChargeChecking*>(enemyAccount);
+		eInterestRate = tempA->getInterestRate();
+		tempA->deposit(eInterestRate*enemyBalance);
+		break;
+	case hIC:
+		tempB = static_cast<highInterestChecking*>(enemyAccount);
+		eInterestRate = tempB->getInterestRate();
+		tempB->deposit(eInterestRate*enemyBalance);
+		break;
+	case cOD:
+		tempC->incrementMonths();
+		tempC = static_cast<certificateOfDeposit*>(enemyAccount);
+		eInterestRate = tempC->getInterestRate();
+		tempC->deposit(eInterestRate*enemyBalance);
+		break;
+	case sA:
+		tempD = static_cast<savingsAccount*>(enemyAccount);
+		eInterestRate = tempD->getInterestRate();
+		tempD->deposit(eInterestRate*enemyBalance);
+	case hIS:
+		tempE = static_cast<highInterestSavings*>(enemyAccount);
+		eInterestRate = tempE->getInterestRate();
+		tempE->deposit(eInterestRate*enemyBalance);
+	}
+
+	switch (userType) {
+	case sCC:
+		return;
+	case nSCC:
+		tempA = static_cast<noServiceChargeChecking*>(userAccount);
+		uInterestRate = tempA->getInterestRate();
+		tempA->deposit(uInterestRate*userBalance);
+		break;
+	case hIC:
+		tempB = static_cast<highInterestChecking*>(userAccount);
+		uInterestRate = tempB->getInterestRate();
+		tempB->deposit(uInterestRate*userBalance);
+		break;
+	case cOD:
+		tempC = static_cast<certificateOfDeposit*>(userAccount);
+		uInterestRate = tempC->getInterestRate();
+		tempC->deposit(uInterestRate*userBalance);
+		break;
+	case sA:
+		tempD = static_cast<savingsAccount*>(userAccount);
+		uInterestRate = tempD->getInterestRate();
+		tempD->deposit(uInterestRate*userBalance);
+	case hIS:
+		tempE = static_cast<highInterestSavings*>(userAccount);
+		uInterestRate = tempE->getInterestRate();
+		tempE->deposit(uInterestRate*userBalance);
+	}
+
+	double tempVal = uInterestRate * userBalance;
+	userRecord = userName+" gained $"+std::to_string(tempVal)+" in interest.";
+	tempVal = eInterestRate * enemyBalance;
+	enemyRecord = enemyName+" gained $"+std::to_string(tempVal)+" in interest.";
+	records.push_back(enemyRecord);
+	records.push_back(userRecord);
+}
+
+void recentActions(int months, std::vector<std::string> &records) {
+	if (months == 0)
+		return;
+	int length = records.size();
+	bool found = false;
+	int indexBegin;
+	int indexEnd;
+	int i = 0;
+	int monthCounter = 0;
+	//get to most recent month
+	while (monthCounter < months - 1) {
+		std::string current = records[i];
+		if (current == "break") 
+			monthCounter++;
+		i++;
+	}
+	indexBegin = i;
+	while (records[i++] != "break");
+	indexEnd = --i;
+
+	printf("\n");
+	for (int j = indexBegin; j < indexEnd; j++) {
+		std::cout << records[j] << std::endl;
+	}
+}
+
 void healthBar(double max, double current) {
-	int maxDots = 20;
-	int ratio = maxDots*(max/current);
+	double maxDots = 20;
+	double ratio = (current/max)/maxDots;
+	int newMax = static_cast<int>(maxDots);
+	int newRatio = static_cast<int>(ratio);
+	int i;
+	std::cout << "newRatio: " << newRatio << std::endl;
 
 	std::cout << "Balance: [";
-	for (int i = 0; i < maxDots; i++) 
+	for (i = 0; i < (newMax-ratio); i++) 
 		std::cout << "*";
-	for (int i = 0; i < (maxDots-ratio); i++) 
+	for ( ; i < newMax; i++) 
 		std::cout << " ";
 	std::cout << "] " << "$" << current << "/$" << max;	
 

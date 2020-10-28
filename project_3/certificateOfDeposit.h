@@ -13,6 +13,7 @@ public:
 	double getInterestRate() const;
 	int getCurrentMonths() const;
 	int getMaturityMonths() const;
+	bool isMature() const;
 
 	double withdraw(double) override;
 	double deposit(double) override;
@@ -51,12 +52,16 @@ int certificateOfDeposit::getMaturityMonths() const {
 	return maturityMonths;
 }
 
+bool certificateOfDeposit::isMature() const {
+	return (currentMonths >= maturityMonths);
+}
+
 //Returns -2 if certificate is not ready to be withdrawn.
 //Returns -1 if the account has inssuficient funds.
 //Otherwise returns the balance after withdrawal.
 double certificateOfDeposit::withdraw(double amount) {
 
-	if (currentMonths < maturityMonths) {
+	if (currentMonths < maturityMonths && !battleMode) {
 		std::cout << "\nYou certificate of deposit has not reached" <<
 			" maturity yet." << std::endl;
 		return -2;
@@ -64,7 +69,7 @@ double certificateOfDeposit::withdraw(double amount) {
 
 	double myBalance = this->getAccountBalance();
 	fixSign(amount);
-	if ((myBalance -= amount) < 0) {
+	if ((myBalance -= amount) < 0 && !battleMode) {
 		std::cout << "\nInsufficient funds." << std::endl;
 		return -1;
 	}
@@ -73,6 +78,7 @@ double certificateOfDeposit::withdraw(double amount) {
 		+getCurrentTime()+")";
 	transactions += temp;
 
+	this->setAccountBalance(myBalance);
 	return myBalance;
 }
 

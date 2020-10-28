@@ -14,6 +14,7 @@ public:
 	double getMinimumBalance() const;
 	double getBalanceFee() const;
 	bool getFeeInvoked() const;
+	void resetFee();
 
 	double withdraw(double) override;
 	double writeCheck(double amount, bankAccount *target) override; 
@@ -50,6 +51,10 @@ double noServiceChargeChecking::getBalanceFee() const {
 
 bool noServiceChargeChecking::getFeeInvoked() const {
 	return feeInvoked;
+}
+
+void noServiceChargeChecking::resetFee() {
+	feeInvoked = false;
 }
 
 //Returns -1 if the account does not have enough money.
