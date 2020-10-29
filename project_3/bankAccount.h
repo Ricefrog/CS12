@@ -168,7 +168,8 @@ void bankAccount::setMonthsDelayed(int m) {
 }
 
 void bankAccount::decrementMonthsDelayed() {
-	--monthsDelayed;
+	if (monthsDelayed > 0)
+		monthsDelayed--;
 	if (monthsDelayed == 0)
 		delayed = false;
 }

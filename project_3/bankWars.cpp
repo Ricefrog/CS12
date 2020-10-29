@@ -87,11 +87,14 @@ int main() {
 		std::cin.clear();
 		enemyAccount = enemySelectScreen();
 		enemyAccType = enemyAccount->getAccountType();
+		if (enemyAccType == cOD)
+			enemyAccount->setMonthsDelayed(4);
 		if (enemyAccount->getAccountBalance() <= 0) {
 			psuedoClear();
 			std::cout << "Enemy is already defeated.\n" << std::endl;
 			std::cout << "~Continue -> any character\n" << std::endl;
 			USER_PROMPT;
+			std::cin.clear();
 			std::cin >> temp;
 			std::cin.clear();
 			continue;
@@ -99,6 +102,8 @@ int main() {
 			std::cin >> temp;
 			while (enemyAccount->getAccountBalance() > 0) {
 				std::cout << "entered second while" << std::endl;
+				userAccount->info();
+				enemyAccount->info();
 				if (userAccount->getAccountBalance() <= 0)
 					return gameOver(months);
 				battleField(userAccount, enemyAccount, months, records[rIndex]);

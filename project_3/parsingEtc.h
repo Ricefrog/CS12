@@ -376,6 +376,10 @@ bankAccount *enemySelectScreen() {
 	for (int i = 0; i < selection; i++) {
 		selectedEnemy = selectedEnemy->next;
 	}
+
+	if (selectedEnemy->getAccountBalance() <= 0)
+		return selectedEnemy;
+
 	std::cout << "Here is some information about your opponent.\n" << std::endl;
 	selectedEnemy->info();
 	std::cout << "\n~I\'m ready to battle! -> any character\n" << std::endl;
@@ -580,9 +584,9 @@ int enemySelect(bankAccount *enemyAccount, bankAccount *userAccount) {
 	case cOD:
 		std::cout << "enemy cOd selection" << std::endl;
 		tempA = static_cast<certificateOfDeposit*>(enemyAccount);
-		if (tempA->isMature())
-			return 0;
-		return 1;
+		if (!tempA->isMature())
+			return 1;
+		return 0;
 	default:
 		if (selection > 60)
 			return 0;
@@ -594,15 +598,16 @@ int enemySelect(bankAccount *enemyAccount, bankAccount *userAccount) {
 double enemyValue(bankAccount *enemyAccount, int enemySelection) {
 	double enemyBalance = enemyAccount->getAccountBalance();
 	srand(time(NULL));
-	double randVal = (rand() % 100) * .001 + .01;
+	double randValA = (rand() % 100) * .001 + .02;
+	double randValC = (rand() % 100) * .001 + .01;
 
 	switch (enemySelection) {
 	case 0:
-		return (randVal * enemyBalance);
+		return (randValA * enemyBalance);
 	case 1:
 		return 0;
 	case 2:
-		return (randVal * enemyBalance);
+		return (randValC * enemyBalance);
 	}
 	return 0;
 }
@@ -798,8 +803,8 @@ void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
 		tempB->deposit(eInterestRate*enemyBalance);
 		break;
 	case cOD:
-		tempC->incrementMonths();
 		tempC = static_cast<certificateOfDeposit*>(enemyAccount);
+		tempC->incrementMonths();
 		eInterestRate = tempC->getInterestRate();
 		tempC->deposit(eInterestRate*enemyBalance);
 		break;
@@ -831,6 +836,7 @@ void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
 		break;
 	case cOD:
 		tempC = static_cast<certificateOfDeposit*>(userAccount);
+		tempC->incrementMonths();
 		uInterestRate = tempC->getInterestRate();
 		tempC->deposit(uInterestRate*userBalance);
 		break;
@@ -1101,7 +1107,7 @@ int quit() {
 
 void psuedoClear() {
 	if (clearScreens)
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 150; i++)
 			std::cout << "\n";
 }
 

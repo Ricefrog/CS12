@@ -38,7 +38,8 @@ certificateOfDeposit::certificateOfDeposit(accountType t, std::string name, doub
 }
 
 int certificateOfDeposit::incrementMonths() {
-	return ++currentMonths;
+	currentMonths++;
+	return currentMonths;
 }
 
 double certificateOfDeposit::getInterestRate() const {
@@ -90,7 +91,7 @@ double certificateOfDeposit::withdraw(double amount) {
 	return myBalance;
 }
 
-//Returns -1 
+//Returns -1 if not battleMode
 double certificateOfDeposit::deposit(double amount) {
 	if (!battleMode) {
 		std::cout << "\nYou can only deposit once." << std::endl;
