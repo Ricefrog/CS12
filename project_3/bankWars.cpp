@@ -20,7 +20,7 @@ int main() {
 	bankAccount *userAccount;
 	bankAccount *enemyAccount;
 	certificateOfDeposit *setInitDelay;
-	
+
 	startScreen();
 	std::cin >> userInput;
 	switch (userInput) {
@@ -78,9 +78,12 @@ int main() {
 	double enemyActionValue;
 	accountType enemyAccType;
 	serviceChargeChecking *tempS = static_cast<serviceChargeChecking*>(userAccount);
+	//reusing a single vector would cause segfaults for some reason
+	std::vector<std::string> records[numberOfEnemies];
+	int rIndex = 0;
 	while (!allEnemiesDefeated()) {
+		std::cout << "entered first while" << std::endl;
 		months = 0;
-		records.clear();
 		std::cin.clear();
 		enemyAccount = enemySelectScreen();
 		enemyAccType = enemyAccount->getAccountType();
@@ -91,23 +94,23 @@ int main() {
 			USER_PROMPT;
 			std::cin >> temp;
 			std::cin.clear();
+			continue;
 		} else {
 			std::cin >> temp;
 			while (enemyAccount->getAccountBalance() > 0) {
+				std::cout << "entered second while" << std::endl;
 				if (userAccount->getAccountBalance() <= 0)
 					return gameOver(months);
-				battleField(userAccount, enemyAccount, months);
+				battleField(userAccount, enemyAccount, months, records[rIndex]);
 				selection = battlePrompt(userAccount);
-				enemySelection = enemySelect(enemyAccount, userAccount);
-				enemyActionValue = enemyValue(enemyAccount, enemySelection);
 
 				switch (selection) {
 				case 0:
-					battleField(userAccount, enemyAccount, months);
+					battleField(userAccount, enemyAccount, months, records[rIndex]);
 					userActionValue = attackPrompt(userAccount);
 					break;
 				case 1:
-					battleField(userAccount, enemyAccount, months);
+					battleField(userAccount, enemyAccount, months, records[rIndex]);
 					userActionValue = 0;
 					break;
 				case 2:
@@ -121,36 +124,44 @@ int main() {
 						selection = 3;
 						goto mS;
 					}
-					battleField(userAccount, enemyAccount, months);
+					battleField(userAccount, enemyAccount, months, records[rIndex]);
 					userActionValue = checkPrompt(userAccount, enemyAccount);
 					break;
 				case 3:
 					mS:
-					battleField(userAccount, enemyAccount, months);
-					std::cout << "In progress" << std::endl;	
+					battleField(userAccount, enemyAccount, months, records[rIndex]);
 					break;
 				default:
-					battleField(userAccount, enemyAccount, months);
-					std::cout << "In progress" << std::endl;	
-					//do nothing
+					battleField(userAccount, enemyAccount, months, records[rIndex]);
+					selection = 1;
+					userActionValue = 0;
 				}
 
 				if (selection == 3) {
-					std::cout << "view monthly statements" << std::endl;
+					printMonthlyStatements(months, records[rIndex]);
+					continue;
 				} else {
+					if (enemyAccount->getAccountBalance() <= 0 ||
+						userAccount->getAccountBalance() <= 0)
+						continue;
+					enemySelection = enemySelect(enemyAccount, userAccount);
+					enemyActionValue = enemyValue(enemyAccount, enemySelection);
 					accountInteractions(userAccount, enemyAccount, 
 							selection, enemySelection,
-							userActionValue, enemyActionValue, records);
+							userActionValue, enemyActionValue, records[rIndex]);
+					
 					months++;
-					monthlyUpdate(userAccount, enemyAccount, records); 
-					records.push_back("break");
+					monthlyUpdate(userAccount, enemyAccount, records[rIndex]); 
+					records[rIndex].push_back("break");
 				 }
 			}
+			std::cout << "Exited second while" << std::endl;
 			clearUserStatus(userAccount);
 			enemyDefeatedScreen(userAccount, enemyAccount, months);
+			rIndex++;
+			std::cout << "End of first while" << std::endl;
 		}
 	}
-	//printAllInfo(rootAccount);
-	//printAllTransactionStr(rootAccount);
-	return 0;
+
+	return userWon();
 }

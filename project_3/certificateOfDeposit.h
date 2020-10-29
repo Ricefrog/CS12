@@ -83,7 +83,9 @@ double certificateOfDeposit::withdraw(double amount) {
 	std::string temp = "withdraw("+std::to_string(amount)+","
 		+getCurrentTime()+")";
 	transactions += temp;
-
+	std::cout << "cOD withdraw, myBalance: " << myBalance << std::endl;
+	if (myBalance < 0)
+		myBalance = 0;
 	this->setAccountBalance(myBalance);
 	return myBalance;
 }

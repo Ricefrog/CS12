@@ -13,7 +13,6 @@
 extern std::string userName;
 std::string userName = "newUser";
 int months;
-std::vector<std::string> records;
 
 //turned off when debugging
 bool clearScreens = true;
@@ -22,7 +21,7 @@ const int numberOfEnemies = 6;
 const double rewardOnKill = 1500;
 
 //constants for account types
-const double sCCServiceCharge = 300;
+const double sCCServiceCharge = 150;
 const double sCCDmgModifier = 3.8;
 const int sCCCheckLimit = 3;
 
@@ -60,7 +59,7 @@ void hISInfo();
 accountType accountSelectionMenu();
 bankAccount *enemySelectScreen();
 bool allEnemiesDefeated();
-void battleField(bankAccount*, bankAccount*, int);
+void battleField(bankAccount*, bankAccount*, int, std::vector<std::string>);
 int battlePrompt(bankAccount*);
 int enemySelect(bankAccount*, bankAccount*);
 double attackPrompt(bankAccount*);
@@ -72,7 +71,9 @@ void recentActions(int, std::vector<std::string>&);
 void clearUserStatus(bankAccount*);
 void enemyDefeatedScreen(bankAccount*, bankAccount*, int);
 int gameOver(int);
+void printMonthlyStatements(int, std::vector<std::string>);
 void healthBar(double, double);
+int userWon();
 int quit();
 void psuedoClear();
 void horizontalLine(int, char);
@@ -385,17 +386,20 @@ bankAccount *enemySelectScreen() {
 }
 
 bool allEnemiesDefeated() {
+	std::cout << "allEnemiesDefeated called" << std::endl;
 	bankAccount *current = bankAccount::root;
 	for (int i = 0; i < numberOfEnemies; i++) {
+		std::cout << "i = " << i << std::endl;
 		if (current->getAccountBalance() > 0)
 			return false;
 		current = current->next;
 	}
+	std::cout << "returning true" << std::endl;
 	return true;
 }
 
 void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
-		int months) {
+		int months, std::vector<std::string> myRecords) {
 	accountType userType = userAccount->getAccountType();
 	accountType enemyType = enemyAccount->getAccountType();
 	double maxUserBalance = userAccount->startingBalance;
@@ -522,7 +526,7 @@ void battleField(bankAccount *userAccount, bankAccount *enemyAccount,
 		else
 			std::cout << "Months Until MATURE: " << mMonths-months << std::endl;
 	}
-	recentActions(months, records);
+	recentActions(months, myRecords);
 }
 
 int battlePrompt(bankAccount *userAccount) {
@@ -555,7 +559,7 @@ int enemySelect(bankAccount *enemyAccount, bankAccount *userAccount) {
 	srand(time(NULL));
 	accountType type = enemyAccount->getAccountType();
 	accountType userType = userAccount->getAccountType();
-	certificateOfDeposit *tempA = static_cast<certificateOfDeposit*>(enemyAccount);
+	certificateOfDeposit *tempA;
 	serviceChargeChecking *tempB;
 	int selection = rand() % 100;
 	switch (type) {
@@ -566,14 +570,16 @@ int enemySelect(bankAccount *enemyAccount, bankAccount *userAccount) {
 		}
 	case nSCC:
 	case hIC:
-		if (selection < 30)
+		if (selection < 60)
 			return 0;
-		if (selection < 29 && selection < 80)
+		if (selection > 59 && selection < 80)
 			return 1;
 		if (userType != cOD)
 			userAccount->setMonthsDelayed(1);
 		return 2;
 	case cOD:
+		std::cout << "enemy cOd selection" << std::endl;
+		tempA = static_cast<certificateOfDeposit*>(enemyAccount);
 		if (tempA->isMature())
 			return 0;
 		return 1;
@@ -640,7 +646,7 @@ double checkPrompt(bankAccount *userAccount, bankAccount *enemyAccount) {
 void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		int userSelection, int enemySelection,
 		double userActionValue, double enemyActionValue,
-		std::vector<std::string> &records) { 
+		std::vector<std::string> &myRecords) { 
 	std::cout << "account interactions called." << std::endl;
 	accountType userType = userAccount->getAccountType();
 	accountType enemyType = enemyAccount->getAccountType();
@@ -653,8 +659,8 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 	double userChargeOrFee;
 	double enemyChargeOrFee;
 	std::string enemyName = enemyAccount->getAccountName();
-	std::string enemyRecord;
-	std::string userRecord;
+	std::string enemyRecord = "error if you see this";
+	std::string userRecord = "error if you see this";
 	std::cout << "passed var decs" << std::endl;
 
 	switch (userType) {
@@ -664,7 +670,7 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		userChargeOrFee = userSCC->getServiceCharge();
 		userAccount->withdraw(userChargeOrFee);
 		userRecord = userName+" was charged $"+std::to_string(userChargeOrFee)+".";
-		records.push_back(userRecord);
+		myRecords.push_back(userRecord);
 		break;
 	case hIC:
 		userDmgModifier = hICDmgModifier;
@@ -684,7 +690,7 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		enemyChargeOrFee = enemySCC->getServiceCharge();
 		enemyAccount->withdraw(enemyChargeOrFee);
 		enemyRecord = enemyName+" was charged $"+std::to_string(enemyChargeOrFee)+".";
-		records.push_back(enemyRecord);
+		myRecords.push_back(enemyRecord);
 		break;
 	case hIC:
 		enemyDmgModifier = hICDmgModifier;
@@ -719,6 +725,8 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		} else {
 			enemyRecord = enemyName+"'s check bounced!";
 		}
+	default:
+		enemyRecord = "Did "+enemyName+" give up hope!?";
 	}
 	std::cout << "passed enemy action selection" << std::endl;
 
@@ -740,15 +748,17 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		tempU->writeCheck(userActionValue, userAccount);
 		userRecord = userName+" wrote a check for $"+
 			std::to_string(userActionValue)+".";
+	default:
+		userRecord = "Did "+userName+" give up hope!?";
 	}
 	std::cout << "passed user attack selection" << std::endl;
-	records.push_back(enemyRecord);
-	records.push_back(userRecord);
+	myRecords.push_back(enemyRecord);
+	myRecords.push_back(userRecord);
 	std::cout << "end of accountInteractions" << std::endl;
 }
 
 void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
-		std::vector<std::string> &records) {
+		std::vector<std::string> &myRecords) {
 	std::cout << "monthlyUpdate called" << std::endl;
 	double userBalance = userAccount->getAccountBalance();
 	double enemyBalance = enemyAccount->getAccountBalance();
@@ -838,8 +848,8 @@ void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
 	userRecord = userName+" gained $"+std::to_string(tempVal)+" in interest.";
 	tempVal = eInterestRate * enemyBalance;
 	enemyRecord = enemyName+" gained $"+std::to_string(tempVal)+" in interest.";
-	records.push_back(enemyRecord);
-	records.push_back(userRecord);
+	myRecords.push_back(enemyRecord);
+	myRecords.push_back(userRecord);
 	enemyRecord = "";
 	userRecord = "";
 	std::cout << "pushed interest rates into records" << std::endl;
@@ -926,16 +936,16 @@ void monthlyUpdate(bankAccount* userAccount, bankAccount *enemyAccount,
 	}
 	std::cout << "passed fees" << std::endl;
 	if (enemyRecord.length() > 1)	
-		records.push_back(enemyRecord);
+		myRecords.push_back(enemyRecord);
 	if (userRecord.length() > 1)
-		records.push_back(userRecord);
+		myRecords.push_back(userRecord);
 	std::cout << "end of monthlyUpdate" << std::endl;
 }
 
-void recentActions(int months, std::vector<std::string> &records) {
+void recentActions(int months, std::vector<std::string> &myRecords) {
 	if (months == 0)
 		return;
-	int length = records.size();
+	int length = myRecords.size();
 	bool found = false;
 	int indexBegin;
 	int indexEnd;
@@ -943,18 +953,18 @@ void recentActions(int months, std::vector<std::string> &records) {
 	int monthCounter = 0;
 	//get to most recent month
 	while (monthCounter < months - 1) {
-		std::string current = records[i];
+		std::string current = myRecords[i];
 		if (current == "break") 
 			monthCounter++;
 		i++;
 	}
 	indexBegin = i;
-	while (records[i++] != "break");
+	while (myRecords[i++] != "break");
 	indexEnd = --i;
 
 	printf("\n");
 	for (int j = indexBegin; j < indexEnd; j++) {
-		std::cout << records[j] << std::endl;
+		std::cout << myRecords[j] << std::endl;
 	}
 }
 
@@ -982,6 +992,7 @@ void clearUserStatus(bankAccount *userAccount) {
 	case cOD:
 		tempD = static_cast<certificateOfDeposit*>(userAccount);
 		tempD->setCurrentMonths(0);
+		tempD->setMonthsDelayed(4);
 		break;
 	case sA:
 		break;
@@ -1002,7 +1013,7 @@ void enemyDefeatedScreen(bankAccount *userAccount, bankAccount *enemyAccount, in
 	std::string defeated = "You defeated "+enemyName+"!";
 	psuedoClear();
 	drawBox(defeated, '@');
-	std::cout << "Months of battle: " << months;
+	std::cout << "\nMonths of battle: " << months;
 	std::cout << "\n\nYou were awarded $" << reward << "." << std::endl;
 	std::cout << "\n~Right on! -> any character\n" << std::endl;
 	USER_PROMPT;
@@ -1015,12 +1026,37 @@ int gameOver(int months) {
 	char temp;
 	psuedoClear();
 	drawBox("You were defeated!", 'x');
-	std::cout << "\n\nMonths of batlle: " << months;
+	std::cout << "\n\nMonths of battle: " << months;
 	std::cout << "\n\n~Better luck next time! -> any character\n" << std::endl;
 	USER_PROMPT;
 	std::cin >> temp;
 
 	return quit();
+}
+
+void printMonthlyStatements(int months, std::vector<std::string> myRecords) {
+	int i = 0;
+	int size = myRecords.size();
+	int monthCounter = 0;
+	char temp;
+	std::string current = "";
+
+	psuedoClear();
+	while (monthCounter < months) {
+		std::cout << "\n\nMonth " << monthCounter << ":" << std::endl;
+
+		do {
+			current = myRecords[i++];
+			std::cout << current << std::endl;
+		} while(myRecords[i] != "break" && i < size+1);
+
+		i++;
+		monthCounter++;
+	}
+	std::cout << "\n~Continue -> any character\n" << std::endl;
+	USER_PROMPT;
+	std::cin >> temp;
+	std::cin.clear();
 }
 
 void healthBar(double max, double current) {
@@ -1039,10 +1075,25 @@ void healthBar(double max, double current) {
 
 }
 
+int userWon() {
+	char temp;
+
+	psuedoClear();
+	drawBox("You won!", '$');
+	std::cout << "\n\nYou have proven your superiority on the financial"
+		<< " battlefield.\n" << std::endl;
+	std::cout << "Press any key.\n" << std::endl;
+	USER_PROMPT;
+	std::cin >> temp;
+
+	return quit();
+}
+
 int quit() {
 	psuedoClear();
 	std::cout << "Thanks for playing!\n" << std::endl;
-	saveData(bankAccount::root);
+	//I didn't want to bother with saving progress
+	//saveData(bankAccount::root);
 	return 0;
 }
 

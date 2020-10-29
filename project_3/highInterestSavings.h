@@ -54,7 +54,7 @@ void highInterestSavings::resetFee() {
 double highInterestSavings::withdraw(double amount) {
 	double myBalance = this->getAccountBalance();
 	fixSign(amount);
-	if (myBalance - amount >= 0) {
+	if (myBalance - amount >= 0 || battleMode) {
 		std::string temp = "withdraw("+std::to_string(amount)
 			+","+getCurrentTime()+")";
 		if (myBalance - amount < minimumBalance && !feeInvoked) {
