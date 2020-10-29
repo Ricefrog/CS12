@@ -81,6 +81,7 @@ int main() {
 	while (!allEnemiesDefeated()) {
 		months = 0;
 		records.clear();
+		std::cin.clear();
 		enemyAccount = enemySelectScreen();
 		enemyAccType = enemyAccount->getAccountType();
 		if (enemyAccount->getAccountBalance() <= 0) {
@@ -92,8 +93,9 @@ int main() {
 			std::cin.clear();
 		} else {
 			std::cin >> temp;
-			while (enemyAccount->getAccountBalance() > 0 
-					&& userAccount->getAccountBalance() > 0) {
+			while (enemyAccount->getAccountBalance() > 0) {
+				if (userAccount->getAccountBalance() <= 0)
+					return gameOver(months);
 				battleField(userAccount, enemyAccount, months);
 				selection = battlePrompt(userAccount);
 				enemySelection = enemySelect(enemyAccount, userAccount);
@@ -139,11 +141,13 @@ int main() {
 					accountInteractions(userAccount, enemyAccount, 
 							selection, enemySelection,
 							userActionValue, enemyActionValue, records);
-					records.push_back("break");
 					months++;
 					monthlyUpdate(userAccount, enemyAccount, records); 
+					records.push_back("break");
 				 }
 			}
+			clearUserStatus(userAccount);
+			enemyDefeatedScreen(userAccount, enemyAccount, months);
 		}
 	}
 	//printAllInfo(rootAccount);

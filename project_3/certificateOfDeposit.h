@@ -12,6 +12,7 @@ public:
 	int incrementMonths();
 	double getInterestRate() const;
 	int getCurrentMonths() const;
+	void setCurrentMonths(int);
 	int getMaturityMonths() const;
 	bool isMature() const;
 
@@ -46,6 +47,11 @@ double certificateOfDeposit::getInterestRate() const {
 
 int certificateOfDeposit::getCurrentMonths() const {
 	return currentMonths;
+}
+
+void certificateOfDeposit::setCurrentMonths(int m) {
+	fixSign(m);
+	currentMonths = m;
 }
 
 int certificateOfDeposit::getMaturityMonths() const {
@@ -84,8 +90,15 @@ double certificateOfDeposit::withdraw(double amount) {
 
 //Returns -1 
 double certificateOfDeposit::deposit(double amount) {
-	std::cout << "\nYou can only deposit once." << std::endl;
-	return -1;
+	if (!battleMode) {
+		std::cout << "\nYou can only deposit once." << std::endl;
+		return -1;
+	}
+	double myBalance = this->getAccountBalance();
+	fixSign(amount);
+	myBalance += amount;
+	this->setAccountBalance(myBalance);
+	return myBalance;
 }
 
 double certificateOfDeposit::receive(double t, bankAccount *b) {

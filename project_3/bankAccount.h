@@ -190,11 +190,13 @@ double bankAccount::withdraw(double amount) {
 		std::string temp = "withdraw("+std::to_string(amount)
 			+","+getCurrentTime()+")";
 		transactions += temp;
-		return (accountBalance -= amount);
+		accountBalance -= amount;
+		return accountBalance; 
 	}
 
 	if (battleMode)
 		return (accountBalance -= amount);
+
 	return -1;
 }
 
