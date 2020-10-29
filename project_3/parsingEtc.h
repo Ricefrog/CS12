@@ -154,7 +154,7 @@ void sCCInfo() {
 		<< "for a certain amount of time.\n" << std::endl;
 	std::cout << "These accounts deal extra damage but "
 		<< "are charged a service charge every month." << std::endl;
-	std::cout << "Also, they gain five times the reward for defeating"
+	std::cout << "Also, they gain seven times the reward for defeating"
 		<< " an enemy." << std::endl;
 	std::cout << "There is also a limit to the number of checks"
 		<< " they can write.\n" << std::endl;
@@ -725,6 +725,7 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		} else {
 			enemyRecord = enemyName+"'s check bounced!";
 		}
+		break;
 	default:
 		enemyRecord = "Did "+enemyName+" give up hope!?";
 	}
@@ -748,6 +749,7 @@ void accountInteractions(bankAccount *userAccount, bankAccount *enemyAccount,
 		tempU->writeCheck(userActionValue, userAccount);
 		userRecord = userName+" wrote a check for $"+
 			std::to_string(userActionValue)+".";
+		break;
 	default:
 		userRecord = "Did "+userName+" give up hope!?";
 	}
@@ -1008,7 +1010,7 @@ void enemyDefeatedScreen(bankAccount *userAccount, bankAccount *enemyAccount, in
 	char temp;
 	double reward = rewardOnKill;
 	if (userAccount->getAccountType() == sCC)
-		reward *= 5;
+		reward *= 7;
 	std::string enemyName = enemyAccount->getAccountName();
 	std::string defeated = "You defeated "+enemyName+"!";
 	psuedoClear();
